@@ -1,6 +1,6 @@
 # build-fonts
 
-Font build pipeline — subset, compile, and package webfonts.
+Font build pipeline: subset, compile, and package webfonts.
 
 ## Install
 

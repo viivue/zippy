@@ -1,7 +1,7 @@
 # devkit
 
 A monorepo of standalone Python command-line tools for internal team use.
-Each tool is a fully independent package — no shared code, no cross-dependencies.
+Each tool is a fully independent package with no shared code or cross-dependencies.
 
 ## Tools
 
@@ -37,7 +37,7 @@ Run `<command> --help` to see usage.
    ```
 2. Rename the inner `src/vidopt` directory to match your package name (use
    underscores, e.g. `src/my_tool`).
-3. Edit `tools/my-tool/pyproject.toml` — update `name`, `version`, `description`,
+3. Edit `tools/my-tool/pyproject.toml`: update `name`, `version`, `description`,
    the `[project.scripts]` entry point, and the `[tool.hatch.build]` source path.
 4. Write your CLI logic in `src/my_tool/cli.py`.
 5. Add a row to the table above.

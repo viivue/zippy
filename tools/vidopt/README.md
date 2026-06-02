@@ -7,7 +7,7 @@ noticeable quality. Source files are never modified or deleted.
 ## Requirements
 
 - Python 3.10 or later
-- ffmpeg — see below
+- ffmpeg (see below)
 
 ## Install
 
@@ -24,7 +24,7 @@ vidopt looks for ffmpeg and ffprobe in this order:
 1. `~/.vidopt/bin/`
 2. System PATH
 
-**Windows** — vidopt auto-downloads a static build from
+**Windows:** vidopt auto-downloads a static build from
 [gyan.dev](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip)
 on first run and places the binaries in `~\.vidopt\bin\`.
 
@@ -65,7 +65,7 @@ vidopt ./raw-footage --recursive --overwrite
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--output DIR` | `<input>/optimized` | Destination folder |
-| `--quality 1-5` | `4` | Output quality — see below |
+| `--quality 1-5` | `4` | Output quality (see below) |
 | `--speed fast\|balanced\|slow\|thorough` | `slow` | Encoding speed |
 | `--max-width PX` | off | Scale down if wider than PX |
 | `--h265` | off | Use H.265/HEVC codec (modern browsers only) |
@@ -78,11 +78,11 @@ vidopt ./raw-footage --recursive --overwrite
 
 | Value | Result |
 |-------|--------|
-| `5` | Near-lossless — largest files |
-| `4` | **Default** — high quality, good compression |
-| `3` | Balanced — noticeably smaller |
+| `5` | Near-lossless, largest files |
+| `4` | **Default** - high quality, good compression |
+| `3` | Balanced, noticeably smaller |
 | `2` | Small file priority |
-| `1` | Aggressive compression — smallest files |
+| `1` | Aggressive compression, smallest files |
 
 ## Speed (`--speed`)
 
