@@ -113,6 +113,11 @@ Net saved: 98.44 MB
 Files marked `LARGER` are kept but flagged. This sometimes happens when the
 source was already well-compressed or encoded with a modern codec at low bitrate.
 
+Files marked `SKIPPED` already have an output in place — pass `--overwrite` to
+re-encode them.
+
+When batch-processing more than one file, a progress bar tracks overall progress.
+
 ## Development
 
 ```sh
