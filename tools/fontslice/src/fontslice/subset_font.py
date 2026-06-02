@@ -1,5 +1,5 @@
 """
-Subset a variable or static font and export as woff2/woff.
+Subset a variable or static font and export as woff2.
 
 Two-stage pipeline:
   1. Instance variable axes  (fontTools.varLib.instancer)
@@ -76,7 +76,7 @@ def process_font(
     subsets: str = "latin",
     unicodes: str | None = None,
     features: str = DEFAULT_FEATURES,
-    formats: str = "woff2,woff",
+    formats: str = "woff2",
 ) -> dict[str, int]:
     """Instance axes then subset and convert one font file.
 
@@ -135,9 +135,6 @@ def process_font(
         if fmt == "woff2":
             out   = output_base + ".woff2"
             extra = ["--flavor=woff2"]
-        elif fmt == "woff":
-            out   = output_base + ".woff"
-            extra = ["--flavor=woff", "--with-zopfli"]
         elif fmt == "ttf":
             out   = output_base + ".ttf"
             extra = []
@@ -169,7 +166,7 @@ def process_font(
 def main() -> None:
     """Standalone CLI: subset and convert a single font file."""
     p = argparse.ArgumentParser(
-        description="Subset and convert a font to woff2/woff.",
+        description="Subset and convert a font to woff2.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("input", help="Source font file (.ttf or .otf)")
@@ -185,8 +182,8 @@ def main() -> None:
                    help="Custom unicode range; overrides --subsets")
     p.add_argument("--features", default=DEFAULT_FEATURES,
                    help="OpenType features to keep")
-    p.add_argument("--formats",  default="woff2,woff",
-                   help="Output formats: woff2,woff,ttf (default: woff2,woff)")
+    p.add_argument("--formats",  default="woff2",
+                   help="Output formats: woff2,ttf (default: woff2)")
     args = p.parse_args()
 
     try:

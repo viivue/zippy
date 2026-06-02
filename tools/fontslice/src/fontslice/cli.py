@@ -1,7 +1,7 @@
 """
 FontSlice — standalone orchestrator.
 
-Subset and convert source variable/static fonts to optimized woff2 + woff files.
+Subset and convert source variable/static fonts to optimized woff2 files.
 Scans all .ttf/.otf files in the theme's fonts folder (skips icomoon* files).
 Uses weight ranges from $fonts in _config.scss when defined; falls back to font
 file axes.
@@ -75,7 +75,7 @@ def _validate_subsets(subsets_str: str) -> str:
 def main() -> None:
     p = argparse.ArgumentParser(
         prog="fontslice",
-        description="Subset and convert theme fonts to optimized woff2/woff files.",
+        description="Subset and convert theme fonts to optimized woff2 files.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -151,14 +151,12 @@ def main() -> None:
             continue
 
         woff2_size = sizes.get("woff2", 0)
-        woff_size  = sizes.get("woff",  0)
         savings    = (1 - woff2_size / orig_size) * 100 if orig_size else 0
 
         built.append({
             **font,
             "orig_size":  orig_size,
             "woff2_size": woff2_size,
-            "woff_size":  woff_size,
             "savings":    savings,
         })
 
@@ -184,13 +182,12 @@ def main() -> None:
             b["basename"],
             _fmt_size(b["orig_size"]),
             _fmt_size(b["woff2_size"]),
-            _fmt_size(b["woff_size"]),
             wrange,
             f"{b['savings']:.0f}%",
         ])
 
     _print_table(
-        ["Font", "Original", "woff2", "woff", "Weight range", "Savings"],
+        ["Font", "Original", "woff2", "Weight range", "Savings"],
         sum_rows,
     )
     print(f"\nTotal saved (original -> woff2): {_fmt_size(total_orig - total_woff2)}")
@@ -208,8 +205,7 @@ def main() -> None:
         )
         print(f"@font-face {{")
         print(f"  font-family: '{b['family_name']}';")
-        print(f"  src: url('assets/fonts/{b['basename']}.woff2') format('woff2'),")
-        print(f"       url('assets/fonts/{b['basename']}.woff') format('woff');")
+        print(f"  src: url('assets/fonts/{b['basename']}.woff2') format('woff2');")
         print(f"  font-weight: {wrange};")
         print(f"  font-style: normal;")
         print(f"  font-display: swap;")

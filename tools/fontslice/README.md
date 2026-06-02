@@ -1,6 +1,6 @@
 # FontSlice
 
-Subset and convert variable/static fonts to optimized `woff2` + `woff` files.
+Subset and convert variable/static fonts to optimized `woff2` files.
 
 Scans all `.ttf` / `.otf` files in a theme's `fonts/` folder, skips `icomoon*`
 files, and reads weight ranges from `$fonts` in `_config.scss` when available.
@@ -11,9 +11,8 @@ Python 3.10+ and the following packages (installed automatically):
 
 | Package | Purpose |
 |---|---|
-| `fonttools[woff]` | Font parsing, subsetting, instancing |
+| `fonttools` | Font parsing, subsetting, instancing |
 | `brotli` | woff2 compression |
-| `zopfli` | woff compression |
 
 ## Install
 
@@ -114,7 +113,7 @@ Combine subsets: `--subsets latin,latin-ext,vietnamese`
 1. **Discover** — finds all `.ttf`/`.otf` files and resolves weight ranges from `_config.scss` (falls back to the font's own axis values).
 2. **Report** — prints a table of found fonts with family name, weight range, opsz default, and build status (`NEEDS_BUILD` / `UP_TO_DATE`). Fonts whose `.woff2` output is newer than the source are skipped.
 3. **Ask** — prompts for character subsets (or uses `--subsets`).
-4. **Build** — for each font that needs building, instances variable axes then subsets and converts to `woff2`/`woff` via `fontTools`.
+4. **Build** — for each font that needs building, instances variable axes then subsets and converts to `woff2` via `fontTools`.
 5. **Summary** — prints a size comparison table and total bytes saved.
 6. **CSS** — prints ready-to-paste `@font-face` rules using the font's actual family name and resolved weight range.
 
@@ -122,8 +121,7 @@ Combine subsets: `--subsets latin,latin-ext,vietnamese`
 
 For each font:
 
-- `FontName.woff2` — primary format, Brotli-compressed
-- `FontName.woff` — fallback format, Zopfli-compressed
+- `FontName.woff2` — Brotli-compressed
 - `FontName_instanced.ttf` — intermediate file (variable fonts only); safe to delete
 
 And a CSS block:
@@ -131,8 +129,7 @@ And a CSS block:
 ```css
 @font-face {
   font-family: 'Inter';
-  src: url('assets/fonts/Inter.woff2') format('woff2'),
-       url('assets/fonts/Inter.woff') format('woff');
+  src: url('assets/fonts/Inter.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
