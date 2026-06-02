@@ -1,0 +1,25 @@
+# Shared Ruff config for all tools in devkit.
+# Each tool inherits this automatically when ruff is run from the repo root
+# or from within a tool directory (ruff walks up to find the nearest config).
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501", # line too long — formatter handles this
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[lint.isort]
+known-first-party = []  # add per-tool package names if needed

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "build-fonts"
+version = "0.1.0"
+description = "Font build pipeline — subset, compile, and package webfonts."
+requires-python = ">=3.10"
+dependencies = [
+    # Add runtime deps here, e.g.:
+    # "fonttools>=4.0",
+    # "brotli>=1.0",
+]
+
+[project.scripts]
+build-fonts = "build_fonts.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/build_fonts"]
