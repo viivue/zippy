@@ -29,7 +29,7 @@ If it is missing or older than 3.10, download it from
 
 #### uv (recommended)
 
-**Windows (PowerShell):**
+##### Windows
 
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
@@ -37,7 +37,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 
 After the script completes, close and reopen your terminal.
 
-**macOS / Linux:**
+##### macOS / Linux
 
 ```sh
 curl -LsSf https://astral.sh/uv/install.sh | sh

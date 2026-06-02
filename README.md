@@ -33,7 +33,7 @@ Pick one.
 
 #### uv (recommended)
 
-**Windows (PowerShell):**
+##### Windows
 
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
@@ -42,7 +42,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 After the script completes, close and reopen your terminal so the `uv` command
 is recognised.
 
-**macOS / Linux:**
+##### macOS / Linux
 
 ```sh
 curl -LsSf https://astral.sh/uv/install.sh | sh
