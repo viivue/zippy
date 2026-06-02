@@ -68,6 +68,16 @@ uv tool install ./tools/fontslice
 pipx install ./tools/fontslice
 ```
 
+## Updating
+
+Pull the latest code, then reinstall:
+
+```sh
+uv tool install --reinstall ./tools/fontslice
+# or
+pipx install --force ./tools/fontslice
+```
+
 ## Usage
 
 `cd` into your theme project — fonts and `_config.scss` are auto-discovered:

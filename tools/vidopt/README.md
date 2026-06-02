@@ -62,6 +62,16 @@ uv tool install ./tools/vidopt
 pipx install ./tools/vidopt
 ```
 
+## Updating
+
+Pull the latest code, then reinstall:
+
+```sh
+uv tool install --reinstall ./tools/vidopt
+# or
+pipx install --force ./tools/vidopt
+```
+
 ## ffmpeg
 
 vidopt looks for ffmpeg and ffprobe in this order:

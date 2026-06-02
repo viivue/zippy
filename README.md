@@ -77,6 +77,20 @@ pipx install ./tools/fontslice
 After installation the commands `vidopt` and `fontslice` are available
 system-wide. Run `<command> --help` to see usage.
 
+## Updating a tool
+
+Pull the latest code, then reinstall:
+
+```sh
+# uv
+uv tool install --reinstall ./tools/vidopt
+uv tool install --reinstall ./tools/fontslice
+
+# pipx
+pipx install --force ./tools/vidopt
+pipx install --force ./tools/fontslice
+```
+
 ## Adding a new tool
 
 1. Copy an existing tool folder as a template:
