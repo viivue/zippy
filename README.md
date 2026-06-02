@@ -12,22 +12,70 @@ Each tool is a fully independent package with no shared code or cross-dependenci
 
 ## Installing a tool
 
-### uv (recommended)
+### Step 1 - Python 3.10 or later
+
+Check if Python is already installed:
 
 ```sh
-uv tool install ./tools/vidopt
-uv tool install ./tools/fontslice
+python --version
 ```
 
-### pipx
+If it is missing or older than 3.10, download and install it from
+[python.org/downloads](https://www.python.org/downloads/).
+
+> **Windows tip:** In the installer check "Add Python to PATH" before clicking
+> Install Now.
+
+### Step 2 - install uv or pipx
+
+Both are tool-runners that install each CLI into its own isolated environment.
+Pick one.
+
+#### uv (recommended)
+
+**Windows (PowerShell):**
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+After the script completes, close and reopen your terminal so the `uv` command
+is recognised.
+
+**macOS / Linux:**
 
 ```sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Verify: `uv --version`
+
+#### pipx (alternative)
+
+```sh
+pip install --user pipx
+pipx ensurepath
+```
+
+Close and reopen your terminal after `ensurepath`, then verify with
+`pipx --version`.
+
+### Step 3 - install the tool
+
+From the repo root:
+
+```sh
+# uv
+uv tool install ./tools/vidopt
+uv tool install ./tools/fontslice
+
+# pipx
 pipx install ./tools/vidopt
 pipx install ./tools/fontslice
 ```
 
-After installation the commands `vidopt` and `fontslice` are available system-wide.
-Run `<command> --help` to see usage.
+After installation the commands `vidopt` and `fontslice` are available
+system-wide. Run `<command> --help` to see usage.
 
 ## Adding a new tool
 

@@ -7,12 +7,57 @@ noticeable quality. Source files are never modified or deleted.
 ## Requirements
 
 - Python 3.10 or later
-- ffmpeg (see below)
+- ffmpeg (auto-downloaded on Windows; see below for other platforms)
 
 ## Install
 
+### Step 1 - Python 3.10 or later
+
+Check if Python is already installed:
+
 ```sh
-uv tool install ./tools/vidopt   # from repo root
+python --version
+```
+
+If it is missing or older than 3.10, download it from
+[python.org/downloads](https://www.python.org/downloads/).
+
+> **Windows tip:** In the installer check "Add Python to PATH" before clicking
+> Install Now.
+
+### Step 2 - install uv or pipx
+
+#### uv (recommended)
+
+**Windows (PowerShell):**
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+After the script completes, close and reopen your terminal.
+
+**macOS / Linux:**
+
+```sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+#### pipx (alternative)
+
+```sh
+pip install --user pipx
+pipx ensurepath
+```
+
+Close and reopen your terminal after `ensurepath`.
+
+### Step 3 - install vidopt
+
+From the repo root:
+
+```sh
+uv tool install ./tools/vidopt
 # or
 pipx install ./tools/vidopt
 ```
