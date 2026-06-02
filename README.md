@@ -8,7 +8,7 @@ Each tool is a fully independent package with no shared code or cross-dependenci
 | Tool | Command | Description |
 |------|---------|-------------|
 | [vidopt](tools/vidopt/) | `vidopt` | Video optimisation helper (re-encode, resize, batch-process) |
-| [build-fonts](tools/build-fonts/) | `build-fonts` | Font build pipeline (subset, compile, package webfonts) |
+| [fontslice](tools/fontslice/) | `fontslice` | Subset and convert variable/static fonts to optimized woff2/woff |
 
 ## Installing a tool
 
@@ -16,17 +16,17 @@ Each tool is a fully independent package with no shared code or cross-dependenci
 
 ```sh
 uv tool install ./tools/vidopt
-uv tool install ./tools/build-fonts
+uv tool install ./tools/fontslice
 ```
 
 ### pipx
 
 ```sh
 pipx install ./tools/vidopt
-pipx install ./tools/build-fonts
+pipx install ./tools/fontslice
 ```
 
-After installation the commands `vidopt` and `build-fonts` are available system-wide.
+After installation the commands `vidopt` and `fontslice` are available system-wide.
 Run `<command> --help` to see usage.
 
 ## Adding a new tool
