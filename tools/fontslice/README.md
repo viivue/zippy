@@ -160,3 +160,12 @@ cd tools/fontslice
 uv venv && uv pip install -e .
 fontslice --help
 ```
+
+The `-e` flag installs in editable mode — source changes take effect immediately
+without reinstalling.
+
+If you add or change dependencies in `pyproject.toml`, re-run:
+
+```sh
+uv pip install -e .
+```

@@ -180,3 +180,12 @@ cd tools/vidopt
 uv venv && uv pip install -e .
 vidopt --help
 ```
+
+The `-e` flag installs in editable mode — source changes take effect immediately
+without reinstalling.
+
+If you add or change dependencies in `pyproject.toml`, re-run:
+
+```sh
+uv pip install -e .
+```
