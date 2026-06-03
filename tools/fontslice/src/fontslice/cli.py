@@ -48,6 +48,28 @@ def _print_table(headers: list[str], rows: list[list]) -> None:
         print(fmt.format(*[str(v) for v in row]))
 
 
+def _ask_weights(fonts: list[dict]) -> list[dict]:
+    """Prompt per-font weight overrides when no _config.scss was found."""
+    print("No _config.scss found — weight ranges were read from the font files.")
+    print("Press Enter to accept each value, or type a new range (e.g. 300 900 or 400).")
+    print()
+    updated = []
+    for font in fonts:
+        wmin, wmax = font["weight_min"], font["weight_max"]
+        current = f"{wmin} {wmax}" if wmin != wmax else wmin
+        val = input(f"  {font['basename']} [{current}]: ").strip()
+        if val:
+            parts = val.split()
+            try:
+                nums = [int(p) for p in parts]
+                font = {**font, "weight_min": str(min(nums)), "weight_max": str(max(nums))}
+            except ValueError:
+                print(f"    Invalid input — keeping {current}")
+        updated.append(font)
+    print()
+    return updated
+
+
 def _ask_subsets() -> str:
     print()
     print("Which character subsets should I build?")
@@ -117,10 +139,15 @@ def main() -> None:
         print("\nAll fonts are up to date.")
         sys.exit(0)
 
-    # ── Step 2: choose subsets ────────────────────────────────────────────────
+    # ── Step 2 (optional): confirm weights when no config found ───────────────
+    if config_path == "NONE":
+        fonts       = _ask_weights(fonts)
+        needs_build = [f for f in fonts if f["status"] == "NEEDS_BUILD"]
+
+    # ── Step 3: choose subsets ────────────────────────────────────────────────
     subsets = _validate_subsets(args.subsets or _ask_subsets())
 
-    # ── Step 3: process each font ─────────────────────────────────────────────
+    # ── Step 4: process each font ─────────────────────────────────────────────
     print(f"\nBuilding {len(needs_build)} font(s) with subset(s): {subsets}\n")
     built: list[dict] = []
 
@@ -163,7 +190,7 @@ def main() -> None:
     if not built:
         sys.exit(1)
 
-    # ── Step 4: summary table ─────────────────────────────────────────────────
+    # ── Step 5: summary table ─────────────────────────────────────────────────
     print("\n\n" + "=" * 64)
     print("Summary")
     print("=" * 64)
@@ -192,7 +219,7 @@ def main() -> None:
     )
     print(f"\nTotal saved (original -> woff2): {_fmt_size(total_orig - total_woff2)}")
 
-    # ── Step 5: @font-face CSS ────────────────────────────────────────────────
+    # ── Step 6: @font-face CSS ────────────────────────────────────────────────
     print("\n\n" + "=" * 64)
     print("@font-face rules — paste into fonts.css")
     print("=" * 64 + "\n")

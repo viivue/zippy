@@ -4,6 +4,8 @@ Subset and convert variable/static fonts to optimized `woff2` files.
 
 Scans all `.ttf` / `.otf` files in a theme's `fonts/` folder, skips `icomoon*`
 files, and reads weight ranges from `$fonts` in `_config.scss` when available.
+When no `_config.scss` is found, it prompts to confirm or override the weight
+range for each font before building.
 
 ## Requirements
 
@@ -112,10 +114,11 @@ Combine subsets: `--subsets latin,latin-ext,vietnamese`
 
 1. **Discover** — finds all `.ttf`/`.otf` files and resolves weight ranges from `_config.scss` (falls back to the font's own axis values).
 2. **Report** — prints a table of found fonts with family name, weight range, opsz default, and build status (`NEEDS_BUILD` / `UP_TO_DATE`). Fonts whose `.woff2` output is newer than the source are skipped.
-3. **Ask** — prompts for character subsets (or uses `--subsets`).
-4. **Build** — for each font that needs building, instances variable axes then subsets and converts to `woff2` via `fontTools`.
-5. **Summary** — prints a size comparison table and total bytes saved.
-6. **CSS** — prints ready-to-paste `@font-face` rules using the font's actual family name and resolved weight range.
+3. **Weights** *(no config only)* — if no `_config.scss` is found, prompts for each font to confirm or override the auto-detected weight range (press Enter to keep, or type e.g. `300 900`).
+4. **Ask** — prompts for character subsets (or uses `--subsets`).
+5. **Build** — for each font that needs building, instances variable axes then subsets and converts to `woff2` via `fontTools`.
+6. **Summary** — prints a size comparison table and total bytes saved.
+7. **CSS** — prints ready-to-paste `@font-face` rules using the font's actual family name and resolved weight range.
 
 ## Output
 

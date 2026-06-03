@@ -22,6 +22,15 @@ def normalize(s: str) -> str:
     return re.sub(r"[\s-]", "", s).lower()
 
 
+def _family_name(name_table, fallback: str) -> str:
+    """Return the best CSS-usable family name from a font name table."""
+    for nid in (16, 1):
+        val = name_table.getDebugName(nid)
+        if val and len(val) <= 64 and "@" not in val and not val.lower().startswith("copyright"):
+            return val
+    return fallback
+
+
 def _discover(base: str) -> tuple[str | None, str]:
     """Walk base and return (fonts_dir, config_path)."""
     fonts_dir   = None
@@ -122,11 +131,7 @@ def discover_fonts(
 
         f = TTFont(font_path, lazy=True)
         name_table  = f["name"]
-        family_name = (
-            name_table.getBestFamilyName()
-            or name_table.getDebugName(1)
-            or basename
-        )
+        family_name = _family_name(name_table, basename)
 
         if "fvar" in f:
             axes         = {a.axisTag: a for a in f["fvar"].axes}
