@@ -112,8 +112,9 @@ def process_font(
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
-    instanced   = output_base + "_instanced.ttf"
-    is_variable = bool(_font_axes(src))
+    instanced    = output_base + "_instanced.ttf"
+    is_woff2_src = src.lower().endswith(".woff2")
+    is_variable  = (not is_woff2_src) and bool(_font_axes(src))
 
     if axis_specs and is_variable:
         print(f"  Instancing axes: {', '.join(axis_specs)}")
@@ -124,7 +125,7 @@ def process_font(
         )
         work = instanced
     else:
-        if axis_specs and not is_variable:
+        if axis_specs and not is_variable and not is_woff2_src:
             print("  Not a variable font — skipping instancing step.")
         work = src
 
@@ -169,7 +170,7 @@ def main() -> None:
         description="Subset and convert a font to woff2.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("input", help="Source font file (.ttf or .otf)")
+    p.add_argument("input", help="Source font file (.ttf, .otf, or .woff2)")
     p.add_argument("-o", "--output-base", required=True,
                    help="Output path without extension (e.g. assets/fonts/MyFont)")
     p.add_argument("--weight",   help="wght axis range or pin: 400:700 or 400")

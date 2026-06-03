@@ -91,6 +91,25 @@ def _clean_stem(fname: str) -> str:
     return stem.rstrip(" -_")
 
 
+def _read_font_meta(font_path: str) -> tuple[str, int | None, int | None, int | None]:
+    """Return (family_name, wmin, wmax, opsz_default) from any font file."""
+    basename    = _clean_stem(os.path.basename(font_path))
+    f           = TTFont(font_path, lazy=True)
+    family_name = _family_name(f["name"], basename)
+    if "fvar" in f:
+        axes         = {a.axisTag: a for a in f["fvar"].axes}
+        opsz_default = int(axes["opsz"].defaultValue) if "opsz" in axes else None
+        wght_ax      = axes.get("wght")
+        wmin         = int(wght_ax.minValue) if wght_ax else None
+        wmax         = int(wght_ax.maxValue) if wght_ax else None
+    else:
+        wc           = int(f["OS/2"].usWeightClass)
+        wmin = wmax  = wc
+        opsz_default = None
+    f.close()
+    return family_name, wmin, wmax, opsz_default
+
+
 def discover_fonts(
     base: str | None = None,
     fonts_dir: str | None = None,
@@ -129,21 +148,7 @@ def discover_fonts(
     for font_path in files:
         basename = _clean_stem(os.path.basename(font_path))
 
-        f = TTFont(font_path, lazy=True)
-        name_table  = f["name"]
-        family_name = _family_name(name_table, basename)
-
-        if "fvar" in f:
-            axes         = {a.axisTag: a for a in f["fvar"].axes}
-            opsz_default = int(axes["opsz"].defaultValue) if "opsz" in axes else None
-            wght_ax      = axes.get("wght")
-            font_wmin    = int(wght_ax.minValue) if wght_ax else None
-            font_wmax    = int(wght_ax.maxValue) if wght_ax else None
-        else:
-            wc           = int(f["OS/2"].usWeightClass)
-            font_wmin    = font_wmax = wc
-            opsz_default = None
-        f.close()
+        family_name, font_wmin, font_wmax, opsz_default = _read_font_meta(font_path)
 
         matched = _lookup(config_weights, normalize(family_name)) or _lookup(
             config_weights, normalize(basename)
@@ -160,6 +165,49 @@ def discover_fonts(
             "UP_TO_DATE"
             if os.path.isfile(woff2_out)
             and os.path.getmtime(woff2_out) >= os.path.getmtime(font_path)
+            else "NEEDS_BUILD"
+        )
+
+        fonts.append({
+            "basename":    basename,
+            "family_name": family_name,
+            "weight_min":  str(weight_min),
+            "weight_max":  str(weight_max),
+            "opsz":        str(opsz_default) if opsz_default is not None else "",
+            "font_path":   font_path,
+            "status":      status,
+        })
+
+    # ── woff2-only: fonts with no .ttf/.otf counterpart ──────────────────────
+    _ICON = ("icomoon", "fontawesome", "font-awesome", "fa-")
+    source_basenames = {_clean_stem(os.path.basename(f)) for f in files}
+    woff2_only = sorted(
+        f
+        for f in glob.glob(os.path.join(resolved_fonts_dir, "*.woff2"))
+        if not any(x in os.path.basename(f).lower() for x in _ICON)
+        and not os.path.basename(f).endswith(".opt.woff2")
+        and _clean_stem(os.path.basename(f)) not in source_basenames
+    )
+
+    for font_path in woff2_only:
+        basename    = _clean_stem(os.path.basename(font_path))
+        family_name, font_wmin, font_wmax, opsz_default = _read_font_meta(font_path)
+
+        matched = _lookup(config_weights, normalize(family_name)) or _lookup(
+            config_weights, normalize(basename)
+        )
+        if matched:
+            weight_min, weight_max = matched
+        elif font_wmin is not None:
+            weight_min, weight_max = font_wmin, font_wmax
+        else:
+            weight_min = weight_max = 400
+
+        opt_out = os.path.join(resolved_fonts_dir, basename + ".opt.woff2")
+        status = (
+            "UP_TO_DATE"
+            if os.path.isfile(opt_out)
+            and os.path.getmtime(opt_out) >= os.path.getmtime(font_path)
             else "NEEDS_BUILD"
         )
 

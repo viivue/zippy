@@ -2,9 +2,10 @@
 FontSlice — standalone orchestrator.
 
 Subset and convert source variable/static fonts to optimized woff2 files.
-Scans all .ttf/.otf files in the theme's fonts folder (skips icomoon* and fontawesome* files).
+Scans all .ttf/.otf files in the theme's fonts folder, plus any .woff2 files
+that have no corresponding .ttf/.otf source (skips icomoon* and fontawesome*).
 Uses weight ranges from $fonts in _config.scss when defined; falls back to font
-file axes.
+file axes. woff2-source outputs are saved as <basename>.opt.woff2.
 
 Usage:
     fontslice [--fonts-dir PATH] [--config PATH] [--subsets SUBSETS]
@@ -165,10 +166,13 @@ def main() -> None:
             else f"{font['weight_min']}:{font['weight_max']}"
         )
 
+        is_woff2_src = font["font_path"].lower().endswith(".woff2")
+        out_stem = font["basename"] + (".opt" if is_woff2_src else "")
+
         try:
             sizes = process_font(
                 src=font["font_path"],
-                output_base=os.path.join(fonts_dir, font["basename"]),
+                output_base=os.path.join(fonts_dir, out_stem),
                 weight=weight_arg,
                 opsz=font["opsz"] or None,
                 subsets=subsets,
@@ -230,9 +234,11 @@ def main() -> None:
             if b["weight_min"] == b["weight_max"]
             else f"{b['weight_min']} {b['weight_max']}"
         )
+        is_woff2_src = b["font_path"].lower().endswith(".woff2")
+        woff2_file   = b["basename"] + (".opt.woff2" if is_woff2_src else ".woff2")
         print(f"@font-face {{")
         print(f"  font-family: '{b['family_name']}';")
-        print(f"  src: url('assets/fonts/{b['basename']}.woff2') format('woff2');")
+        print(f"  src: url('assets/fonts/{woff2_file}') format('woff2');")
         print(f"  font-weight: {wrange};")
         print(f"  font-style: normal;")
         print(f"  font-display: swap;")
