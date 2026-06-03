@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "imgopt"
+version = "0.1.0"
+description = "Optimise JPEG/PNG/WebP images for web delivery using Pillow."
+requires-python = ">=3.10"
+dependencies = [
+    "Pillow>=10.0",
+]
+
+[project.scripts]
+imgopt = "imgopt.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/imgopt"]
