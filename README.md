@@ -9,7 +9,7 @@ Each tool is a fully independent package with no shared code or cross-dependenci
 |------|---------|-------------|
 | [vidopt](tools/vidopt/) | `vidopt` | Re-encode MP4/MOV videos to streaming-ready H.264/H.265 MP4 |
 | [fontslice](tools/fontslice/) | `fontslice` | Subset variable/static fonts and export optimized woff2 files |
-| [imgopt](tools/imgopt/) | `imgopt` | Compress JPEG/PNG/WebP images, resize, and convert to WebP |
+| [imgopt](tools/imgopt/) | `imgopt` | Compress JPEG/PNG/WebP images, resize, and convert to WebP or JPEG |
 
 ---
 
@@ -86,6 +86,7 @@ EXIF metadata is stripped by default.
 |------|---------|-------------|
 | `--quality 1-5` | `4` | Output quality — 1 = smallest file, 5 = best quality |
 | `--webp` | off | Convert all outputs to WebP |
+| `--jpg` | off | Convert all outputs to JPEG (lossy, drops transparency) |
 | `--max-width PX` | — | Scale down if wider than PX, preserving aspect ratio |
 | `--max-height PX` | — | Scale down if taller than PX, preserving aspect ratio |
 | `--keep-exif` | off | Preserve EXIF metadata instead of stripping it |
@@ -102,6 +103,7 @@ imgopt ./raw-images --recursive
 imgopt photo.jpg --quality 5           # best quality
 imgopt photo.jpg --quality 2           # smallest file
 imgopt photo.jpg --webp                # convert to WebP
+imgopt photo.png --jpg                 # convert to JPEG
 imgopt photo.jpg --max-width 1920
 imgopt photo.jpg --max-width 1920 --max-height 1080
 imgopt ./raw-images --dry-run

@@ -84,6 +84,7 @@ imgopt ./raw-images --recursive
 imgopt photo.jpg --quality 5           # best quality
 imgopt photo.jpg --quality 2           # smallest file
 imgopt photo.jpg --webp                # convert to WebP
+imgopt photo.png --jpg                 # convert to JPEG
 imgopt photo.jpg --max-width 1920
 imgopt photo.jpg --max-width 1920 --max-height 1080
 imgopt ./raw-images --dry-run
@@ -97,6 +98,7 @@ imgopt ./raw-images --recursive --overwrite
 | `--output DIR` | `<input>/optimized` | Destination folder |
 | `--quality 1-5` | `4` | Output quality (see below) |
 | `--webp` | off | Convert all outputs to WebP |
+| `--jpg` | off | Convert all outputs to JPEG (lossy, drops transparency) |
 | `--max-width PX` | off | Scale down if wider than PX |
 | `--max-height PX` | off | Scale down if taller than PX |
 | `--keep-exif` | off | Preserve EXIF metadata instead of stripping it |
@@ -117,25 +119,29 @@ imgopt ./raw-images --recursive --overwrite
 JPEG and WebP quality is lossy (higher = better).
 PNG compression is lossless — only file size changes, not visual quality.
 
-## WebP (`--webp`)
+## Format conversion (`--webp` / `--jpg`)
 
-Converts every output to WebP regardless of the source format. WebP typically
-produces smaller files than JPEG or PNG at equivalent visual quality and is
-supported by all modern browsers.
+By default each file is saved in its original format (except BMP and TIFF, which
+are converted to PNG). Use `--webp` or `--jpg` to convert everything to a single
+format. The two flags are mutually exclusive.
 
-Without `--webp`, each file is saved in its original format (except BMP and TIFF,
-which are converted to PNG).
+**`--webp`** — WebP typically produces smaller files than JPEG or PNG at equivalent
+visual quality and is supported by all modern browsers.
+
+**`--jpg`** — converts to JPEG. Images with transparency (e.g. PNG with alpha) have
+their transparent areas dropped (filled with black) because JPEG does not support
+an alpha channel.
 
 ## Supported formats
 
-| Input | Output (default) | Output with `--webp` |
-|-------|-----------------|----------------------|
-| `.jpg` / `.jpeg` | `.jpg` | `.webp` |
-| `.png` | `.png` | `.webp` |
-| `.webp` | `.webp` | `.webp` |
-| `.gif` | `.gif` | `.webp` |
-| `.bmp` | `.png` | `.webp` |
-| `.tiff` / `.tif` | `.png` | `.webp` |
+| Input | Output (default) | `--jpg` | `--webp` |
+|-------|-----------------|---------|----------|
+| `.jpg` / `.jpeg` | `.jpg` | `.jpg` | `.webp` |
+| `.png` | `.png` | `.jpg` | `.webp` |
+| `.webp` | `.webp` | `.jpg` | `.webp` |
+| `.gif` | `.gif` | `.jpg` | `.webp` |
+| `.bmp` | `.png` | `.jpg` | `.webp` |
+| `.tiff` / `.tif` | `.png` | `.jpg` | `.webp` |
 
 ## End-of-run report
 
