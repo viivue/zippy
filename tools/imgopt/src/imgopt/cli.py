@@ -47,6 +47,7 @@ def optimize_file(
     max_width: int | None,
     max_height: int | None,
     to_webp: bool,
+    to_jpg: bool,
     strip_exif: bool,
     overwrite: bool,
     dry_run: bool,
@@ -62,6 +63,9 @@ def optimize_file(
     if to_webp:
         out_name = source.stem + ".webp"
         out_fmt = "WEBP"
+    elif to_jpg:
+        out_name = source.stem + ".jpg"
+        out_fmt = "JPEG"
     elif ext in (".jpg", ".jpeg"):
         out_name = source.stem + ".jpg"
         out_fmt = "JPEG"
@@ -288,6 +292,7 @@ examples:
   imgopt photo.jpg --quality 5          # best quality
   imgopt photo.jpg --quality 2          # smallest file
   imgopt photo.jpg --webp               # convert to WebP
+  imgopt photo.png --jpg                # convert to JPEG
   imgopt photo.jpg --max-width 1920
   imgopt photo.jpg --max-width 1920 --max-height 1080
   imgopt ./raw-images --dry-run
@@ -304,6 +309,8 @@ examples:
                         help=f"Output quality: 1=smallest .. 5=best (default: {DEFAULT_QUALITY})")
     parser.add_argument("--webp", action="store_true",
                         help="Convert all outputs to WebP (smaller, modern browsers)")
+    parser.add_argument("--jpg", action="store_true",
+                        help="Convert all outputs to JPEG (note: lossy, drops transparency)")
     parser.add_argument("--max-width", type=int, metavar="PX",
                         help="Scale down if image is wider than PX (preserves aspect ratio)")
     parser.add_argument("--max-height", type=int, metavar="PX",
@@ -318,6 +325,9 @@ examples:
                         help="Print what would be done without writing files")
 
     args = parser.parse_args()
+
+    if args.webp and args.jpg:
+        sys.exit("ERROR: --webp and --jpg are mutually exclusive.")
 
     input_path = Path(args.input)
     files = gather_inputs(input_path, recursive=args.recursive)
@@ -351,6 +361,7 @@ examples:
                 max_width=args.max_width,
                 max_height=args.max_height,
                 to_webp=args.webp,
+                to_jpg=args.jpg,
                 strip_exif=not args.keep_exif,
                 overwrite=args.overwrite,
                 dry_run=args.dry_run,
