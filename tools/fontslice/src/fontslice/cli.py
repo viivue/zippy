@@ -2,7 +2,7 @@
 FontSlice — standalone orchestrator.
 
 Subset and convert source variable/static fonts to optimized woff2 files.
-Scans all .ttf/.otf files in the theme's fonts folder (skips icomoon* files).
+Scans all .ttf/.otf files in the theme's fonts folder (skips icomoon* and fontawesome* files).
 Uses weight ranges from $fonts in _config.scss when defined; falls back to font
 file axes.
 

@@ -122,7 +122,7 @@ def discover_fonts(
         f
         for ext in ("*.ttf", "*.otf")
         for f in glob.glob(os.path.join(resolved_fonts_dir, ext))
-        if "icomoon" not in os.path.basename(f).lower()
+        if not any(x in os.path.basename(f).lower() for x in ("icomoon", "fontawesome", "font-awesome", "fa-"))
     )
 
     fonts: list[dict] = []
