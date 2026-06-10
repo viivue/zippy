@@ -36,6 +36,20 @@ SUBSET_UNICODES: dict[str, str] = {
         "U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF",
     "greek-ext":
         "U+1F00-1FFF",
+    # CJK — output files are large (2–10 MB); use --text-file for site-specific subsetting
+    "chinese-simplified":
+        "U+4E00-9FFF,U+3400-4DBF,U+20000-2A6DF,"
+        "U+F900-FAFF,U+3000-303F,U+3100-312F,U+31A0-31BF,U+FF00-FFEF",
+    "chinese-traditional":
+        "U+4E00-9FFF,U+3400-4DBF,U+20000-2A6DF,U+2A700-2CEAF,"
+        "U+F900-FAFF,U+2F800-2FA1F,U+3000-303F,U+3100-312F,U+31A0-31BF,"
+        "U+FF00-FFEF,U+FE30-FE4F",
+    "korean":
+        "U+AC00-D7A3,U+1100-11FF,U+3130-318F,U+A960-A97F,U+D7B0-D7FF,"
+        "U+4E00-9FFF,U+3000-303F,U+FF00-FFEF",
+    "japanese":
+        "U+3040-309F,U+30A0-30FF,U+31F0-31FF,U+FF65-FF9F,"
+        "U+4E00-9FFF,U+3400-4DBF,U+3000-303F,U+FF00-FFEF",
 }
 
 DEFAULT_FEATURES = "kern,liga,clig,calt,ccmp,locl,mark,mkmk"
@@ -75,6 +89,7 @@ def process_font(
     extra_axes: list[str] | None = None,
     subsets: str = "latin",
     unicodes: str | None = None,
+    text_file: str | None = None,
     features: str = DEFAULT_FEATURES,
     formats: str = "woff2",
 ) -> dict[str, int]:
@@ -89,8 +104,13 @@ def process_font(
     orig_size = os.path.getsize(src)
     print(f"Input : {src} ({_fmt_size(orig_size)})")
 
-    if unicodes:
-        unicode_range = unicodes
+    if text_file:
+        if not os.path.isfile(text_file):
+            raise FileNotFoundError(f"Text file not found: {text_file}")
+        subset_arg = f"--text-file={text_file}"
+        print(f"  Subsetting to characters in: {text_file}")
+    elif unicodes:
+        subset_arg = f"--unicodes={unicodes}"
     else:
         names = [s.strip() for s in subsets.split(",")]
         bad   = [n for n in names if n not in SUBSET_UNICODES]
@@ -99,7 +119,7 @@ def process_font(
                 f"Unknown subset(s): {', '.join(bad)}\n"
                 f"Valid names: {', '.join(SUBSET_UNICODES)}"
             )
-        unicode_range = ",".join(SUBSET_UNICODES[n] for n in names)
+        subset_arg = "--unicodes=" + ",".join(SUBSET_UNICODES[n] for n in names)
 
     axis_specs: list[str] = []
     if weight:
@@ -146,7 +166,7 @@ def process_font(
         print(f"  -> {fmt}: {out}")
         _run([
             sys.executable, "-m", "fontTools.subset", work,
-            f"--unicodes={unicode_range}",
+            subset_arg,
             f"--output-file={out}",
             f"--layout-features={features}",
         ] + extra)
@@ -181,6 +201,8 @@ def main() -> None:
                    help="Comma-separated subset names (default: latin)")
     p.add_argument("--unicodes",
                    help="Custom unicode range; overrides --subsets")
+    p.add_argument("--text-file",
+                   help="Path to text file; subsets to exactly those characters (overrides --subsets/--unicodes)")
     p.add_argument("--features", default=DEFAULT_FEATURES,
                    help="OpenType features to keep")
     p.add_argument("--formats",  default="woff2",
@@ -196,6 +218,7 @@ def main() -> None:
             extra_axes=args.axis,
             subsets=args.subsets,
             unicodes=args.unicodes,
+            text_file=args.text_file,
             features=args.features,
             formats=args.formats,
         )
