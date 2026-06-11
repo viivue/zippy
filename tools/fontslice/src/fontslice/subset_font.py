@@ -133,8 +133,8 @@ def process_font(
         os.makedirs(out_dir, exist_ok=True)
 
     instanced    = output_base + "_instanced.ttf"
-    is_woff2_src = src.lower().endswith(".woff2")
-    is_variable  = (not is_woff2_src) and bool(_font_axes(src))
+    is_web_src  = src.lower().endswith((".woff", ".woff2"))
+    is_variable = (not is_web_src) and bool(_font_axes(src))
 
     if axis_specs and is_variable:
         print(f"  Instancing axes: {', '.join(axis_specs)}")
@@ -145,7 +145,7 @@ def process_font(
         )
         work = instanced
     else:
-        if axis_specs and not is_variable and not is_woff2_src:
+        if axis_specs and not is_variable and not is_web_src:
             print("  Not a variable font — skipping instancing step.")
         work = src
 

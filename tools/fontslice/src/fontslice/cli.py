@@ -197,8 +197,37 @@ def main() -> None:
     print(f"  CONFIG    : {config_path}")
     print()
 
+    # ── Filter by source type — default: .ttf only ────────────────────────
+    def _font_ext(font: dict) -> str:
+        return os.path.splitext(font["font_path"])[1].lower()
+
+    ttf_fonts = [f for f in fonts if _font_ext(f) == ".ttf"]
+    otf_fonts = [f for f in fonts if _font_ext(f) == ".otf"]
+    web_fonts = [f for f in fonts if _font_ext(f) in (".woff", ".woff2")]
+
+    selected = list(ttf_fonts)
+
+    if otf_fonts:
+        print(f"  Found {len(otf_fonts)} .otf file(s) — only .ttf is processed by default:")
+        print(f"    {', '.join(f['basename'] for f in otf_fonts)}")
+        val = input("  Process .otf files too? [y/N] ").strip().lower()
+        if val in ("y", "yes"):
+            selected.extend(otf_fonts)
+        print()
+
+    if web_fonts:
+        ext_label = " / ".join(f".{e}" for e in sorted({_font_ext(f).lstrip(".") for f in web_fonts}))
+        print(f"  Found {len(web_fonts)} pre-compiled web font(s) ({ext_label}) with no matching .ttf source:")
+        print(f"    {', '.join(f['basename'] for f in web_fonts)}")
+        val = input(f"  Subset and convert to .woff2? [y/N] ").strip().lower()
+        if val in ("y", "yes"):
+            selected.extend(web_fonts)
+        print()
+
+    fonts = selected
+
     if not fonts:
-        print("No fonts found.")
+        print("No fonts to process.")
         sys.exit(0)
 
     rows = [
@@ -245,8 +274,8 @@ def main() -> None:
 
         print(f"\n── {font['basename']} ──────────────────────────────────────")
         orig_size    = os.path.getsize(font["font_path"])
-        is_woff2_src = font["font_path"].lower().endswith(".woff2")
-        base_stem    = font["basename"] + (".opt" if is_woff2_src else "")
+        is_web_src = font["font_path"].lower().endswith((".woff", ".woff2"))
+        base_stem  = font["basename"] + (".opt" if is_web_src else "")
 
         # Build list of (weight_arg, out_stem) jobs
         spec = _resolve_weight_spec(font, weight_specs) if weight_specs else None
@@ -333,8 +362,7 @@ def main() -> None:
         else:
             wrange = w
 
-        is_woff2_src = b["font_path"].lower().endswith(".woff2")
-        woff2_file   = b["out_stem"] + ".woff2"
+        woff2_file = b["out_stem"] + ".woff2"
         print(f"@font-face {{")
         print(f"  font-family: '{b['family_name']}';")
         print(f"  src: url('assets/fonts/{woff2_file}') format('woff2');")

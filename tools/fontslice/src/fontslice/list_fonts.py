@@ -178,18 +178,19 @@ def discover_fonts(
             "status":      status,
         })
 
-    # ── woff2-only: fonts with no .ttf/.otf counterpart ──────────────────────
+    # ── web-only: .woff/.woff2 files with no .ttf/.otf counterpart ──────────
     _ICON = ("icomoon", "fontawesome", "font-awesome", "fa-")
     source_basenames = {_clean_stem(os.path.basename(f)) for f in files}
-    woff2_only = sorted(
+    web_only = sorted(
         f
-        for f in glob.glob(os.path.join(resolved_fonts_dir, "*.woff2"))
+        for ext in ("*.woff", "*.woff2")
+        for f in glob.glob(os.path.join(resolved_fonts_dir, ext))
         if not any(x in os.path.basename(f).lower() for x in _ICON)
         and not os.path.basename(f).endswith(".opt.woff2")
         and _clean_stem(os.path.basename(f)) not in source_basenames
     )
 
-    for font_path in woff2_only:
+    for font_path in web_only:
         basename    = _clean_stem(os.path.basename(font_path))
         family_name, font_wmin, font_wmax, opsz_default = _read_font_meta(font_path)
 

@@ -2,10 +2,11 @@
 
 Subset and convert variable/static fonts to optimized `woff2` files.
 
-Scans all `.ttf` / `.otf` files in a theme's `fonts/` folder, skips `icomoon*`
-files, and reads weight ranges from `$fonts` in `_config.scss` when available.
-When no `_config.scss` is found, it prompts to confirm or override the weight
-range for each font before building.
+Scans all `.ttf` / `.otf` files in a theme's `fonts/` folder, plus any `.woff2`
+files that have no matching source. Skips `icomoon*` and `fontawesome*` files.
+Reads weight ranges from `$fonts` in `_config.scss` when available; when no
+`_config.scss` is found it prompts to confirm or override the weight range for
+each font before building.
 
 ## Requirements
 
@@ -159,7 +160,7 @@ Use `--subsets all` to include every defined subset in one pass.
 
 ## What it does
 
-1. **Discover** — finds all `.ttf`/`.otf` files and resolves weight ranges from `_config.scss` (falls back to the font's own axis values).
+1. **Discover** — finds all `.ttf`/`.otf` files plus any `.woff2` files with no matching source. Resolves weight ranges from `_config.scss` (falls back to the font's own axis values). Skips `icomoon*` and `fontawesome*` files.
 2. **Report** — prints a table of found fonts with family name, weight range, opsz default, and build status (`NEEDS_BUILD` / `UP_TO_DATE`). Fonts whose `.woff2` output is newer than the source are skipped.
 3. **Weights** *(no config only)* — if no `_config.scss` and no `--weights` flag is given, prompts to confirm or override the auto-detected weight range per font.
 4. **Ask** — prompts for character subsets (or uses `--subsets` / `--text-file`).
@@ -173,16 +174,26 @@ For each font:
 
 - `FontName.woff2` — Brotli-compressed (range or default)
 - `FontName-400.woff2`, `FontName-700.woff2` — one file per pin when `--weights` uses pins
+- `FontName.opt.woff2` — output for `.woff2` source files (subset/optimized copy)
 - `FontName_instanced.ttf` — intermediate file (variable fonts only); safe to delete
 
 And a CSS block per output file:
 
 ```css
-/* range (default or --weights 400-700) */
+/* default (full axis range from font or _config.scss) */
 @font-face {
   font-family: 'Inter';
   src: url('assets/fonts/Inter.woff2') format('woff2');
   font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* range (--weights 400-700) */
+@font-face {
+  font-family: 'Inter';
+  src: url('assets/fonts/Inter.woff2') format('woff2');
+  font-weight: 400 700;
   font-style: normal;
   font-display: swap;
 }
