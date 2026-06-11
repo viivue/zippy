@@ -2,11 +2,11 @@
 
 Subset and convert variable/static fonts to optimized `woff2` files.
 
-Scans all `.ttf` / `.otf` files in a theme's `fonts/` folder, plus any `.woff2`
-files that have no matching source. Skips `icomoon*` and `fontawesome*` files.
-Reads weight ranges from `$fonts` in `_config.scss` when available; when no
-`_config.scss` is found it prompts to confirm or override the weight range for
-each font before building.
+Processes `.ttf` files by default. Also discovers `.otf` and pre-compiled web
+fonts (`.woff` / `.woff2` with no matching source) and prompts before including
+them. Skips `icomoon*` and `fontawesome*` files. Reads weight ranges from
+`$fonts` in `_config.scss` when available; when no `_config.scss` is found it
+prompts to confirm or override the weight range for each font before building.
 
 ## Requirements
 
@@ -160,13 +160,14 @@ Use `--subsets all` to include every defined subset in one pass.
 
 ## What it does
 
-1. **Discover** — finds all `.ttf`/`.otf` files plus any `.woff2` files with no matching source. Resolves weight ranges from `_config.scss` (falls back to the font's own axis values). Skips `icomoon*` and `fontawesome*` files.
-2. **Report** — prints a table of found fonts with family name, weight range, opsz default, and build status (`NEEDS_BUILD` / `UP_TO_DATE`). Fonts whose `.woff2` output is newer than the source are skipped.
-3. **Weights** *(no config only)* — if no `_config.scss` and no `--weights` flag is given, prompts to confirm or override the auto-detected weight range per font.
-4. **Ask** — prompts for character subsets (or uses `--subsets` / `--text-file`).
-5. **Build** — for each font, instances variable axes to the resolved weight range/pins, then subsets and converts to `woff2` via `fontTools`.
-6. **Summary** — prints a size comparison table and total bytes saved.
-7. **CSS** — prints ready-to-paste `@font-face` rules using the font's actual family name and resolved weight.
+1. **Discover** — scans for `.ttf`, `.otf`, `.woff`, and `.woff2` files (skipping `icomoon*` and `fontawesome*`). Resolves weight ranges from `_config.scss` (falls back to the font's own axis values).
+2. **Filter** — only `.ttf` files are included by default. Prompts to also include `.otf` files and any pre-compiled web fonts (`.woff` / `.woff2` with no matching `.ttf` source).
+3. **Report** — prints a table of selected fonts with family name, weight range, opsz default, and build status (`NEEDS_BUILD` / `UP_TO_DATE`). Fonts whose output is newer than the source are skipped.
+4. **Weights** *(no config only)* — if no `_config.scss` and no `--weights` flag is given, prompts to confirm or override the auto-detected weight range per font.
+5. **Ask** — prompts for character subsets (or uses `--subsets` / `--text-file`).
+6. **Build** — for each font, instances variable axes to the resolved weight range/pins, then subsets and converts to `woff2` via `fontTools`.
+7. **Summary** — prints a size comparison table and total bytes saved.
+8. **CSS** — prints ready-to-paste `@font-face` rules using the font's actual family name and resolved weight.
 
 ## Output
 
@@ -174,7 +175,7 @@ For each font:
 
 - `FontName.woff2` — Brotli-compressed (range or default)
 - `FontName-400.woff2`, `FontName-700.woff2` — one file per pin when `--weights` uses pins
-- `FontName.opt.woff2` — output for `.woff2` source files (subset/optimized copy)
+- `FontName.opt.woff2` — output for `.woff` / `.woff2` source files (subset/optimized copy)
 - `FontName_instanced.ttf` — intermediate file (variable fonts only); safe to delete
 
 And a CSS block per output file:
