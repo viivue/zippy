@@ -61,8 +61,10 @@ font file axes. Skips icomoon and Font Awesome fonts automatically.
 | `--fonts-dir PATH` | Path to fonts folder (auto-detected if omitted) |
 | `--config PATH` | Path to `_config.scss` (auto-detected if omitted) |
 | `--subsets` | Comma-separated subset names — skips the interactive prompt |
+| `--weights [FONT:]SPEC` | Weight override, repeatable. `400`, `400,700`, `400-700`. Prefix with `FontName:` to target one font. |
+| `--text-file PATH` | Path to a text file; subsets each font to exactly those characters. Overrides `--subsets`. Recommended for CJK fonts. |
 
-Valid subsets: `latin`, `latin-ext`, `vietnamese`, `cyrillic`, `cyrillic-ext`, `greek`, `greek-ext`
+Valid subsets: `latin`, `latin-ext`, `vietnamese`, `cyrillic`, `cyrillic-ext`, `greek`, `greek-ext`, `chinese-simplified`, `chinese-traditional`, `korean`, `japanese`, `all`
 
 **Examples**
 
