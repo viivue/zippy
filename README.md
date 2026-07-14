@@ -2,15 +2,49 @@
 
 A monorepo of standalone Python command-line tools for internal team use.
 Each tool is a fully independent package with no shared code or cross-dependencies.
+The easiest way to use them is [devkit-ui](tools/devkit-ui/), a local web UI
+that wraps all three CLIs in one page; each CLI is also documented below for
+direct/scripted use.
 
 ## Tools
 
 | Tool | Command | Description |
 |------|---------|-------------|
+| [devkit-ui](tools/devkit-ui/) | `devkit-ui` | Local web UI wrapping vidopt, imgopt, and fontslice in one tabbed page |
 | [vidopt](tools/vidopt/) | `vidopt` | Re-encode MP4/MOV videos to streaming-ready H.264/H.265 MP4 |
 | [fontslice](tools/fontslice/) | `fontslice` | Subset variable/static fonts and export optimized woff2 files |
 | [imgopt](tools/imgopt/) | `imgopt` | Compress JPEG/PNG/WebP images, resize, and convert to WebP or JPEG |
-| [devkit-ui](tools/devkit-ui/) | `devkit-ui` | Local web UI wrapping vidopt, imgopt, and fontslice in one tabbed page |
+
+---
+
+## devkit-ui
+
+A local web UI wrapping `vidopt`, `imgopt`, and `fontslice` behind a single
+tabbed page (Images / Videos / Fonts), for people who'd rather not use the
+command line. Runs a FastAPI server bound to `127.0.0.1` only; jobs work with
+file/folder paths you browse to (native picker), not uploads, so source files
+are never modified, same guarantee as the CLIs.
+
+**Key options**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--port PORT` | `8765` | Port to bind to |
+| `--no-open` | off | Don't automatically open a browser tab on start |
+| `--window` | off | Open in a native desktop window instead of the browser (needs the `[window]` extra) |
+
+**Examples**
+
+```sh
+devkit-ui
+devkit-ui --no-open
+devkit-ui --port 9000
+devkit-ui --window
+```
+
+See [tools/devkit-ui/README.md](tools/devkit-ui/README.md) for full usage and
+install notes; it's installed differently from the other three tools (see
+below).
 
 ---
 
@@ -115,37 +149,6 @@ imgopt ./raw-images --recursive --overwrite
 
 ---
 
-## devkit-ui
-
-A local web UI wrapping `vidopt`, `imgopt`, and `fontslice` behind a single
-tabbed page (Images / Videos / Fonts), for people who'd rather not use the
-command line. Runs a FastAPI server bound to `127.0.0.1` only; jobs work with
-file/folder paths you browse to (native picker), not uploads, so source files
-are never modified, same guarantee as the CLIs.
-
-**Key options**
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--port PORT` | `8765` | Port to bind to |
-| `--no-open` | off | Don't automatically open a browser tab on start |
-| `--window` | off | Open in a native desktop window instead of the browser (needs the `[window]` extra) |
-
-**Examples**
-
-```sh
-devkit-ui
-devkit-ui --no-open
-devkit-ui --port 9000
-devkit-ui --window
-```
-
-See [tools/devkit-ui/README.md](tools/devkit-ui/README.md) for full usage and
-install notes; it's installed differently from the other three tools (see
-below).
-
----
-
 ## Installing a tool
 
 ### Step 1 — Python 3.10 or later
@@ -187,14 +190,20 @@ Verify: `pipx --version`
 
 ### Step 3 — install
 
-From the repo root:
+From the repo root, to get the UI (recommended, uv only, bundles the other
+three tools automatically):
+
+```sh
+uv tool install ./tools/devkit-ui
+```
+
+Or install the CLIs individually:
 
 ```sh
 # uv
 uv tool install ./tools/vidopt
 uv tool install ./tools/fontslice
 uv tool install ./tools/imgopt
-uv tool install ./tools/devkit-ui   # uv only, see tools/devkit-ui/README.md
 
 # pipx
 pipx install ./tools/vidopt
@@ -213,10 +222,10 @@ Pull the latest code, then reinstall:
 
 ```sh
 # uv
+uv tool install --reinstall ./tools/devkit-ui
 uv tool install --reinstall ./tools/vidopt
 uv tool install --reinstall ./tools/fontslice
 uv tool install --reinstall ./tools/imgopt
-uv tool install --reinstall ./tools/devkit-ui
 
 # pipx
 pipx install --force ./tools/vidopt
