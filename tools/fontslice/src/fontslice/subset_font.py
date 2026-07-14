@@ -172,7 +172,7 @@ def process_font(
         ] + extra)
         results[fmt] = os.path.getsize(out)
 
-    print(f"\nSizes:")
+    print("\nSizes:")
     print(f"  original : {_fmt_size(orig_size)}")
     for fmt, size in results.items():
         pct = (1 - size / orig_size) * 100

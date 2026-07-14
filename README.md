@@ -10,6 +10,7 @@ Each tool is a fully independent package with no shared code or cross-dependenci
 | [vidopt](tools/vidopt/) | `vidopt` | Re-encode MP4/MOV videos to streaming-ready H.264/H.265 MP4 |
 | [fontslice](tools/fontslice/) | `fontslice` | Subset variable/static fonts and export optimized woff2 files |
 | [imgopt](tools/imgopt/) | `imgopt` | Compress JPEG/PNG/WebP images, resize, and convert to WebP or JPEG |
+| [devkit-ui](tools/devkit-ui/) | `devkit-ui` | Local web UI wrapping vidopt, imgopt, and fontslice in one tabbed page |
 
 ---
 
@@ -114,6 +115,37 @@ imgopt ./raw-images --recursive --overwrite
 
 ---
 
+## devkit-ui
+
+A local web UI wrapping `vidopt`, `imgopt`, and `fontslice` behind a single
+tabbed page (Images / Videos / Fonts), for people who'd rather not use the
+command line. Runs a FastAPI server bound to `127.0.0.1` only; jobs work with
+file/folder paths you browse to (native picker), not uploads, so source files
+are never modified — same guarantee as the CLIs.
+
+**Key options**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--port PORT` | `8765` | Port to bind to |
+| `--no-open` | off | Don't automatically open a browser tab on start |
+| `--window` | off | Open in a native desktop window instead of the browser (needs the `[window]` extra) |
+
+**Examples**
+
+```sh
+devkit-ui
+devkit-ui --no-open
+devkit-ui --port 9000
+devkit-ui --window
+```
+
+See [tools/devkit-ui/README.md](tools/devkit-ui/README.md) for full usage and
+install notes — it's installed differently from the other three tools (see
+below).
+
+---
+
 ## Installing a tool
 
 ### Step 1 — Python 3.10 or later
@@ -162,12 +194,16 @@ From the repo root:
 uv tool install ./tools/vidopt
 uv tool install ./tools/fontslice
 uv tool install ./tools/imgopt
+uv tool install ./tools/devkit-ui   # uv only — see tools/devkit-ui/README.md
 
 # pipx
 pipx install ./tools/vidopt
 pipx install ./tools/fontslice
 pipx install ./tools/imgopt
 ```
+
+devkit-ui depends on the other three tools as local path dependencies, which
+pipx doesn't resolve the same way `uv` does — install it with `uv` only.
 
 Run `<command> --help` to verify.
 
@@ -180,6 +216,7 @@ Pull the latest code, then reinstall:
 uv tool install --reinstall ./tools/vidopt
 uv tool install --reinstall ./tools/fontslice
 uv tool install --reinstall ./tools/imgopt
+uv tool install --reinstall ./tools/devkit-ui
 
 # pipx
 pipx install --force ./tools/vidopt

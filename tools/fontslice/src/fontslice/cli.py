@@ -96,20 +96,24 @@ def _ask_subsets() -> str:
     return val or "latin"
 
 
-def _validate_subsets(subsets_str: str) -> str:
+def validate_subsets(subsets_str: str) -> str:
+    """Normalize a comma-separated subset spec (or 'all') into a validated CSV string.
+
+    Raises ValueError if any subset name is unrecognized.
+    """
     if subsets_str.strip() == "all":
         return ",".join(VALID_SUBSETS)
     names = [s.strip() for s in subsets_str.split(",") if s.strip()]
     bad   = [n for n in names if n not in VALID_SUBSETS]
     if bad:
-        sys.exit(
-            f"Error: unknown subset(s): {', '.join(bad)}\n"
+        raise ValueError(
+            f"unknown subset(s): {', '.join(bad)}\n"
             f"Valid: {', '.join(VALID_SUBSETS)}, all"
         )
     return ",".join(names)
 
 
-def _parse_weight_entry(raw: str) -> dict:
+def parse_weight_entry(raw: str) -> dict:
     """Parse one --weights value into {target, kind, values}.
 
     target — normalized font name, or None for global
@@ -131,13 +135,13 @@ def _parse_weight_entry(raw: str) -> dict:
     try:
         pins = [int(p.strip()) for p in spec.split(",") if p.strip()]
     except ValueError:
-        sys.exit(f"Error: invalid weight spec '{raw}'")
+        raise ValueError(f"invalid weight spec '{raw}'") from None
     if not pins:
-        sys.exit(f"Error: empty weight spec '{raw}'")
+        raise ValueError(f"empty weight spec '{raw}'")
     return {"target": target, "kind": "pins", "values": pins}
 
 
-def _resolve_weight_spec(font: dict, specs: list[dict]) -> dict | None:
+def resolve_weight_spec(font: dict, specs: list[dict]) -> dict | None:
     """Return the best matching weight spec for a font, or None."""
     fn = normalize(font["family_name"])
     bn = normalize(font["basename"])
@@ -219,7 +223,7 @@ def main() -> None:
         ext_label = " / ".join(f".{e}" for e in sorted({_font_ext(f).lstrip(".") for f in web_fonts}))
         print(f"  Found {len(web_fonts)} pre-compiled web font(s) ({ext_label}) with no matching .ttf source:")
         print(f"    {', '.join(f['basename'] for f in web_fonts)}")
-        val = input(f"  Subset and convert to .woff2? [y/N] ").strip().lower()
+        val = input("  Subset and convert to .woff2? [y/N] ").strip().lower()
         if val in ("y", "yes"):
             selected.extend(web_fonts)
         print()
@@ -257,10 +261,16 @@ def main() -> None:
         subsets = None
         print(f"\nUsing text-based subsetting from: {args.text_file}")
     else:
-        subsets = _validate_subsets(args.subsets or _ask_subsets())
+        try:
+            subsets = validate_subsets(args.subsets or _ask_subsets())
+        except ValueError as exc:
+            sys.exit(f"Error: {exc}")
 
     # ── Step 4: parse weight specs ────────────────────────────────────────────
-    weight_specs = [_parse_weight_entry(w) for w in (args.weights or [])]
+    try:
+        weight_specs = [parse_weight_entry(w) for w in (args.weights or [])]
+    except ValueError as exc:
+        sys.exit(f"Error: {exc}")
 
     # ── Step 5: process each font ─────────────────────────────────────────────
     subset_label = args.text_file or subsets
@@ -278,7 +288,7 @@ def main() -> None:
         base_stem  = font["basename"] + (".opt" if is_web_src else "")
 
         # Build list of (weight_arg, out_stem) jobs
-        spec = _resolve_weight_spec(font, weight_specs) if weight_specs else None
+        spec = resolve_weight_spec(font, weight_specs) if weight_specs else None
 
         if spec is None:
             w = (
@@ -363,13 +373,13 @@ def main() -> None:
             wrange = w
 
         woff2_file = b["out_stem"] + ".woff2"
-        print(f"@font-face {{")
+        print("@font-face {")
         print(f"  font-family: '{b['family_name']}';")
         print(f"  src: url('assets/fonts/{woff2_file}') format('woff2');")
         print(f"  font-weight: {wrange};")
-        print(f"  font-style: normal;")
-        print(f"  font-display: swap;")
-        print(f"}}")
+        print("  font-style: normal;")
+        print("  font-display: swap;")
+        print("}")
         print()
 
     print("Note: url() paths are relative to where fonts.css lives — adjust if needed.")
