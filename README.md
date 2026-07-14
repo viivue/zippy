@@ -121,7 +121,7 @@ A local web UI wrapping `vidopt`, `imgopt`, and `fontslice` behind a single
 tabbed page (Images / Videos / Fonts), for people who'd rather not use the
 command line. Runs a FastAPI server bound to `127.0.0.1` only; jobs work with
 file/folder paths you browse to (native picker), not uploads, so source files
-are never modified — same guarantee as the CLIs.
+are never modified, same guarantee as the CLIs.
 
 **Key options**
 
@@ -141,7 +141,7 @@ devkit-ui --window
 ```
 
 See [tools/devkit-ui/README.md](tools/devkit-ui/README.md) for full usage and
-install notes — it's installed differently from the other three tools (see
+install notes; it's installed differently from the other three tools (see
 below).
 
 ---
@@ -194,7 +194,7 @@ From the repo root:
 uv tool install ./tools/vidopt
 uv tool install ./tools/fontslice
 uv tool install ./tools/imgopt
-uv tool install ./tools/devkit-ui   # uv only — see tools/devkit-ui/README.md
+uv tool install ./tools/devkit-ui   # uv only, see tools/devkit-ui/README.md
 
 # pipx
 pipx install ./tools/vidopt
@@ -203,7 +203,7 @@ pipx install ./tools/imgopt
 ```
 
 devkit-ui depends on the other three tools as local path dependencies, which
-pipx doesn't resolve the same way `uv` does — install it with `uv` only.
+pipx doesn't resolve the same way `uv` does, so install it with `uv` only.
 
 Run `<command> --help` to verify.
 

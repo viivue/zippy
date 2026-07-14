@@ -1,7 +1,7 @@
 # devkit-ui
 
 A local web UI that wraps `vidopt`, `imgopt`, and `fontslice` behind a single
-tabbed page. Runs entirely on your machine — the server only binds to
+tabbed page. Runs entirely on your machine, the server only binds to
 `127.0.0.1`, and every job works with file/folder *paths* you browse to, not
 uploads. Source files are never modified, same as the CLIs.
 
@@ -9,7 +9,7 @@ uploads. Source files are never modified, same as the CLIs.
 
 - Python 3.10 or later
 - `uv` (see the root [README](../../README.md#installing-a-tool) for install steps)
-- ffmpeg on PATH or auto-downloadable (only needed for the Video tab — same
+- ffmpeg on PATH or auto-downloadable (only needed for the Video tab, same
   requirement as `vidopt`)
 - A desktop session for the native folder/file picker (uses `tkinter`, bundled
   with standard Python installs). If `tkinter` isn't available, the UI falls
@@ -53,7 +53,7 @@ devkit-ui --port 9000      # bind to a different port
 devkit-ui --window         # open in a native desktop window instead of a browser
 ```
 
-Open the three tabs — **Images**, **Videos**, **Fonts** — browse to an input
+Open the three tabs (**Images**, **Videos**, **Fonts**), browse to an input
 file or folder, set options (same defaults as each CLI), and click
 **Optimize**. Progress streams live; results land in an `optimized/`
 subfolder next to your input, same as running the CLI directly, unless you
@@ -77,7 +77,7 @@ generated `@font-face` CSS is shown in a copyable block afterward.
 
 - The Video tab only accepts `.mp4`/`.mov` and the Images tab only accepts
   the formats Pillow can read (`.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`,
-  `.bmp`, `.tiff`/`.tif`) — matching `vidopt`/`imgopt` exactly.
+  `.bmp`, `.tiff`/`.tif`), matching `vidopt`/`imgopt` exactly.
 - The Fonts tab adds an explicit **Include** checkbox per detected font
   (checked by default only for `.ttf` sources), replacing the CLI's
   interactive `[y/N]` prompts for `.otf` and pre-compiled web fonts.
@@ -87,4 +87,4 @@ generated `@font-face` CSS is shown in a copyable block afterward.
 
 ## Screenshots
 
-_(placeholder — add screenshots of the Images, Videos, and Fonts tabs here)_
+_(placeholder, add screenshots of the Images, Videos, and Fonts tabs here)_
