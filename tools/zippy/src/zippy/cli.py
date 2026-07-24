@@ -33,6 +33,17 @@ def _free_port() -> int:
 def _run_server(port: int) -> None:
     from .server import app
 
+    if sys.platform == "win32":
+        # The default Proactor loop logs a spurious ConnectionResetError
+        # from _call_connection_lost whenever a browser tab drops a
+        # long-lived SSE connection (job progress) abruptly. The Selector
+        # loop doesn't have this issue; nothing here uses asyncio
+        # subprocesses (ffmpeg/Pillow run via blocking subprocess.Popen on
+        # a plain thread), so it's safe to switch.
+        import asyncio
+
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     uvicorn.run(app, host=HOST, port=port, log_level="info")
 
 
