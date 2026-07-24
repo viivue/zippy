@@ -197,6 +197,7 @@ function initTabs() {
 // ── images tab ────────────────────────────────────────────────────────────────
 
 let imgInputPaths = [];
+let imgPastResults = []; // completed results from earlier runs this session, kept until refresh
 
 function renderImgResults(results) {
   const body = document.getElementById("img-results-body");
@@ -237,20 +238,21 @@ async function runImageJob() {
 
   setButtonLoading("img-run", true);
   initStepProgress("img", imgInputPaths.length);
-  renderImgResults([]);
+  renderImgResults(imgPastResults);
   document.getElementById("img-summary").textContent = "";
 
   try {
     const { job_id } = await postJSON("/api/imgopt/jobs", body);
     subscribeJob(job_id, {
       onUpdate: (payload) => {
-        renderImgResults(payload.results);
+        renderImgResults([...imgPastResults, ...payload.results]);
         updateStepProgress("img", payload);
       },
       onDone: (payload) => {
         setButtonLoading("img-run", false);
         updateStepProgress("img", payload);
-        renderImgResults(payload.results);
+        imgPastResults = [...imgPastResults, ...payload.results];
+        renderImgResults(imgPastResults);
         document.getElementById("img-summary").textContent = summaryText(payload);
       },
     });
@@ -284,6 +286,7 @@ function initImagesTab() {
 // ── videos tab ────────────────────────────────────────────────────────────────
 
 let vidInputPaths = [];
+let vidPastResults = []; // completed results from earlier runs this session, kept until refresh
 
 function renderVidResults(results) {
   const body = document.getElementById("vid-results-body");
@@ -324,20 +327,21 @@ async function runVideoJob() {
 
   setButtonLoading("vid-run", true);
   initStepProgress("vid", vidInputPaths.length);
-  renderVidResults([]);
+  renderVidResults(vidPastResults);
   document.getElementById("vid-summary").textContent = "";
 
   try {
     const { job_id } = await postJSON("/api/vidopt/jobs", body);
     subscribeJob(job_id, {
       onUpdate: (payload) => {
-        renderVidResults(payload.results);
+        renderVidResults([...vidPastResults, ...payload.results]);
         updateStepProgress("vid", payload);
       },
       onDone: (payload) => {
         setButtonLoading("vid-run", false);
         updateStepProgress("vid", payload);
-        renderVidResults(payload.results);
+        vidPastResults = [...vidPastResults, ...payload.results];
+        renderVidResults(vidPastResults);
         document.getElementById("vid-summary").textContent = summaryText(payload);
       },
     });
@@ -371,6 +375,7 @@ function initVideosTab() {
 // ── fonts tab ─────────────────────────────────────────────────────────────────
 
 let fontsList = [];
+let fontsPastResults = []; // completed results from earlier runs this session, kept until refresh
 let fontsDirValue = null;
 let fontsConfigValue = null;
 let fontsDirOverride = null;
@@ -501,20 +506,21 @@ async function runFontsJob() {
 
   setButtonLoading("fonts-run", true);
   initStepProgress("fonts", fonts.length);
-  renderFontsResults([]);
+  renderFontsResults(fontsPastResults);
   document.getElementById("fonts-summary").textContent = "";
 
   try {
     const { job_id } = await postJSON("/api/fontslice/jobs", body);
     subscribeJob(job_id, {
       onUpdate: (payload) => {
-        renderFontsResults(payload.results);
+        renderFontsResults([...fontsPastResults, ...payload.results]);
         updateStepProgress("fonts", payload);
       },
       onDone: (payload) => {
         setButtonLoading("fonts-run", false);
         updateStepProgress("fonts", payload);
-        renderFontsResults(payload.results);
+        fontsPastResults = [...fontsPastResults, ...payload.results];
+        renderFontsResults(fontsPastResults);
         document.getElementById("fonts-summary").textContent = summaryText(payload);
         if (payload.summary && payload.summary.font_face_css) {
           document.getElementById("fontcss-code").textContent = payload.summary.font_face_css;
