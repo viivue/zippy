@@ -1,23 +1,32 @@
-# devkit
+<div align="center">
+
+# zippy
+
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square)
+![Package manager: uv](https://img.shields.io/badge/package%20manager-uv-de5fe9?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey?style=flat-square)
+![Maintained by ViiVue](https://img.shields.io/badge/maintained%20by-ViiVue-f1c400?style=flat-square)
 
 A monorepo of standalone Python command-line tools for internal team use.
 Each tool is a fully independent package with no shared code or cross-dependencies.
-The easiest way to use them is [devkit-ui](tools/devkit-ui/), a local web UI
+The easiest way to use them is [zippy](tools/zippy/), a local web UI
 that wraps all three CLIs in one page; each CLI is also documented below for
 direct/scripted use.
+
+</div>
 
 ## Tools
 
 | Tool | Command | Description |
 |------|---------|-------------|
-| [devkit-ui](tools/devkit-ui/) | `devkit-ui` | Local web UI wrapping vidopt, imgopt, and fontslice in one tabbed page |
+| [zippy](tools/zippy/) | `zippy` | Local web UI wrapping vidopt, imgopt, and fontslice in one tabbed page |
 | [vidopt](tools/vidopt/) | `vidopt` | Re-encode MP4/MOV videos to streaming-ready H.264/H.265 MP4 |
 | [fontslice](tools/fontslice/) | `fontslice` | Subset variable/static fonts and export optimized woff2 files |
 | [imgopt](tools/imgopt/) | `imgopt` | Compress JPEG/PNG/WebP images, resize, and convert to WebP or JPEG |
 
 ---
 
-## devkit-ui
+## zippy
 
 A local web UI wrapping `vidopt`, `imgopt`, and `fontslice` behind a single
 tabbed page (Images / Videos / Fonts), for people who'd rather not use the
@@ -36,13 +45,13 @@ are never modified, same guarantee as the CLIs.
 **Examples**
 
 ```sh
-devkit-ui
-devkit-ui --no-open
-devkit-ui --port 9000
-devkit-ui --window
+zippy
+zippy --no-open
+zippy --port 9000
+zippy --window
 ```
 
-See [tools/devkit-ui/README.md](tools/devkit-ui/README.md) for full usage and
+See [tools/zippy/README.md](tools/zippy/README.md) for full usage and
 install notes; it's installed differently from the other three tools (see
 below).
 
@@ -194,7 +203,7 @@ From the repo root, to get the UI (recommended, uv only, bundles the other
 three tools automatically):
 
 ```sh
-uv tool install ./tools/devkit-ui
+uv tool install ./tools/zippy
 ```
 
 Or install the CLIs individually:
@@ -211,7 +220,7 @@ pipx install ./tools/fontslice
 pipx install ./tools/imgopt
 ```
 
-devkit-ui depends on the other three tools as local path dependencies, which
+zippy depends on the other three tools as local path dependencies, which
 pipx doesn't resolve the same way `uv` does, so install it with `uv` only.
 
 Run `<command> --help` to verify.
@@ -222,7 +231,7 @@ Pull the latest code, then reinstall:
 
 ```sh
 # uv
-uv tool install --reinstall ./tools/devkit-ui
+uv tool install --reinstall ./tools/zippy
 uv tool install --reinstall ./tools/vidopt
 uv tool install --reinstall ./tools/fontslice
 uv tool install --reinstall ./tools/imgopt
