@@ -111,6 +111,7 @@ figcaption {
   background: transparent; border: 1px solid transparent;
   padding: var(--space-2) calc(var(--space-3) * 1.2);
   border-radius: var(--radius-md);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .btn svg { display: block; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -136,6 +137,7 @@ figcaption {
   font-size: 14px; color: var(--color-text); caret-color: var(--color-accent);
   background: var(--color-surface);
   border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+  transition: border-color 0.15s ease;
 }
 .input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
 .input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
@@ -147,6 +149,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .radio .dot {
   width: 16px; height: 16px; flex: none; border-radius: 50%;
   border: 1.5px solid var(--color-divider);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 .radio:hover .dot { border-color: var(--color-accent); }
 .radio input:checked + .dot {
@@ -161,6 +164,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .seg-opt {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px; font-size: 13px; cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 .seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
 .seg-opt:has(input:checked) { background: var(--color-accent); color: var(--color-bg); }
@@ -209,7 +213,7 @@ textarea.input { min-height: 90px; resize: vertical; }
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
   font-size: 18px; margin-right: auto;
 }
-.nav a { color: inherit; text-decoration: none; font-size: 14px; }
+.nav a { color: inherit; text-decoration: none; font-size: 14px; transition: color 0.15s ease; }
 .nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent); }
 
 /* — tables — */
@@ -223,6 +227,7 @@ textarea.input { min-height: 90px; resize: vertical; }
   padding: var(--space-2);
   border-bottom: 1px solid var(--color-divider);
 }
+.table tbody tr { transition: background-color 0.15s ease; }
 .table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
 
 /* — dialog — */
@@ -311,6 +316,7 @@ code, .mono { font-family: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consol
   border: 2px dashed var(--color-divider); padding: 48px 24px; display: flex;
   flex-direction: column; align-items: center; gap: 12px; text-align: center;
   background: var(--color-surface); cursor: pointer;
+  transition: border-color 0.15s ease;
 }
 .dropzone:hover { border-color: var(--color-accent); }
 .dropzone-title { font-size: 16px; font-weight: 600; }
@@ -327,6 +333,7 @@ code, .mono { font-family: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consol
   border-left: 4px solid transparent; cursor: pointer;
   font-family: var(--font-heading); font-weight: 800; font-size: 15px; color: var(--color-text);
   display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+  transition: background-color 0.15s ease, border-left-color 0.15s ease, color 0.15s ease;
 }
 .tab-btn:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
 .tab-btn[aria-selected="true"] {
