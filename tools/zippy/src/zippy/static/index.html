@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>zippy</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="icon" href="/static/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);display:grid;grid-template-columns:240px minmax(0,1fr);">
+
+  <!-- left rail -->
+  <aside style="border-right:2px solid var(--color-divider);display:flex;flex-direction:column;background:var(--color-bg);position:sticky;top:0;height:100vh;overflow-y:auto;">
+    <div style="padding:22px 24px 20px;border-bottom:2px solid var(--color-divider);">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:22px;letter-spacing:-0.01em;line-height:1;">zippy</div>
+      <div class="mono" style="font-size:11px;opacity:0.55;margin-top:8px;">ViiVue optimization tools for dev</div>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;flex:1;" role="tablist">
+      <button type="button" class="tab-btn" data-tab="images" role="tab" aria-selected="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><rect x="3" y="3" width="18" height="18"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+        <span style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;line-height:1.1;">
+          <span>Images</span>
+          <span class="mono" style="font-size:10.5px;opacity:0.55;font-weight:400;">imgopt</span>
+        </span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="videos" role="tab" aria-selected="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12"/></svg>
+        <span style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;line-height:1.1;">
+          <span>Videos</span>
+          <span class="mono" style="font-size:10.5px;opacity:0.55;font-weight:400;">vidopt</span>
+        </span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="fonts" role="tab" aria-selected="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/></svg>
+        <span style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;line-height:1.1;">
+          <span>Fonts</span>
+          <span class="mono" style="font-size:10.5px;opacity:0.55;font-weight:400;">fontslice</span>
+        </span>
+      </button>
+    </nav>
+
+    <div style="padding:16px 24px;border-top:2px solid var(--color-divider);display:flex;flex-direction:column;gap:4px;">
+      <span class="mono" style="font-size:11px;opacity:0.5;">v0.1.0</span>
+      <span class="mono" style="font-size:11px;opacity:0.5;">&copy; 2026 ViiVue</span>
+    </div>
+  </aside>
+
+  <main style="width:100%;padding:32px 40px;display:flex;flex-direction:column;gap:28px;box-sizing:border-box;">
+
+    <!-- ============ IMAGES TAB ============ -->
+    <section data-panel="images" style="display:flex;flex-direction:column;gap:28px;">
+
+      <div class="dropzone" id="img-dropzone">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+        <div class="dropzone-title">Click to <span class="dropzone-link">browse</span> for one or more files</div>
+        <div class="mono dropzone-hint">.jpg &middot; .jpeg &middot; .png &middot; .webp &middot; .gif &middot; .bmp &middot; .tiff &mdash; source files are never modified</div>
+      </div>
+      <div class="path-line">Input: <strong class="mono" id="img-input-path">not selected</strong></div>
+
+      <!-- options -->
+      <div class="card elev-sm" style="padding:24px;gap:20px;">
+        <div class="card-kicker">Options</div>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:28px;">
+          <div class="field">
+            <label>Quality</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Smallest</span>
+              <input type="range" id="img-quality" min="1" max="5" step="1" value="4" style="flex:1;accent-color:var(--color-accent);" />
+              <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Best quality</span>
+              <span class="mono" id="img-quality-value" style="font-size:13px;font-weight:600;background:var(--color-accent-100);color:var(--color-accent-800);padding:2px 8px;min-width:18px;text-align:center;">4</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Output format</label>
+            <div class="seg" role="radiogroup" style="width:100%;">
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="img-format" value="original" checked />Keep original</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="img-format" value="webp" />WebP</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="img-format" value="jpg" />JPEG</label>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+          <div class="field"><label>Max width (px, optional)</label><input class="input mono" type="number" id="img-max-width" placeholder="e.g. 2400" /></div>
+          <div class="field"><label>Max height (px, optional)</label><input class="input mono" type="number" id="img-max-height" placeholder="e.g. 2400" /></div>
+        </div>
+
+        <div class="hr" style="margin:0;"></div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px 28px;">
+          <label class="checkbox-row"><input type="checkbox" id="img-keep-exif" /><span class="checkbox-box"></span>Keep EXIF metadata</label>
+          <label class="checkbox-row"><input type="checkbox" id="img-overwrite" /><span class="checkbox-box"></span>Overwrite existing outputs</label>
+          <label class="checkbox-row"><input type="checkbox" id="img-dry-run" /><span class="checkbox-box"></span>Dry run</label>
+        </div>
+
+        <div class="field" style="max-width:520px;">
+          <label>Output folder (optional)</label>
+          <div style="display:flex;gap:8px;">
+            <input class="input mono" type="text" id="img-output" placeholder="<input>/optimized" style="flex:1;" />
+            <button type="button" class="btn btn-secondary" id="img-output-browse">Browse&hellip;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- results -->
+      <div class="card elev-sm" style="padding:24px;gap:16px;">
+        <div class="card-kicker">Results</div>
+        <table class="table">
+          <thead><tr><th>File</th><th>Original size</th><th>Output size</th><th>Saved %</th><th>Status</th></tr></thead>
+          <tbody id="img-results-body">
+            <tr><td colspan="5" class="mono" style="opacity:0.5;">No results yet.</td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;">
+          <span class="mono" id="img-summary" style="font-size:13px;opacity:0.7;"></span>
+          <button type="button" class="btn btn-primary" id="img-run">
+            <span class="btn-label">Optimize</span>
+            <svg class="btn-icon-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <svg class="btn-icon-spinner is-hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9" opacity="0.25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VIDEOS TAB ============ -->
+    <section data-panel="videos" hidden style="display:flex;flex-direction:column;gap:28px;">
+
+      <div class="dropzone" id="vid-dropzone">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+        <div class="dropzone-title">Click to <span class="dropzone-link">browse</span> for one or more files</div>
+        <div class="mono dropzone-hint">.mp4 &middot; .mov &mdash; source files are never modified</div>
+      </div>
+      <div class="path-line">Input: <strong class="mono" id="vid-input-path">not selected</strong></div>
+
+      <div class="card elev-sm" style="padding:24px;gap:20px;">
+        <div class="card-kicker">Options</div>
+
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:24px 28px;">
+          <div class="field">
+            <label>Quality</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Smallest</span>
+              <input type="range" id="vid-quality" min="1" max="5" step="1" value="4" style="flex:1;accent-color:var(--color-accent);" />
+              <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Best</span>
+              <span class="mono" id="vid-quality-value" style="font-size:13px;font-weight:600;background:var(--color-accent-100);color:var(--color-accent-800);padding:2px 8px;min-width:18px;text-align:center;">4</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Max width (px, optional)</label>
+            <input class="input mono" type="number" id="vid-max-width" placeholder="e.g. 1920" />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:24px 28px;">
+          <div class="field">
+            <label>Speed</label>
+            <div class="seg" role="radiogroup" style="width:100%;">
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-speed" value="fast" />fast</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-speed" value="balanced" />balanced</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-speed" value="slow" checked />slow</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-speed" value="thorough" />thorough</label>
+            </div>
+            <div class="mono" style="font-size:12px;opacity:0.55;margin-top:6px;">slower = smaller files</div>
+          </div>
+          <div class="field">
+            <label>Codec</label>
+            <div class="seg" role="radiogroup" style="width:100%;">
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-codec" value="h264" checked />H.264</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-codec" value="h265" />H.265</label>
+            </div>
+            <div class="mono" style="font-size:12px;opacity:0.55;margin-top:6px;">H.265: smaller files, modern browsers only</div>
+          </div>
+        </div>
+
+        <div class="hr" style="margin:0;"></div>
+
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px 28px;">
+          <label class="checkbox-row"><input type="checkbox" id="vid-overwrite" /><span class="checkbox-box"></span>Overwrite</label>
+          <label class="checkbox-row"><input type="checkbox" id="vid-dry-run" /><span class="checkbox-box"></span>Dry run</label>
+        </div>
+
+        <div class="field" style="max-width:520px;">
+          <label>Output folder (optional)</label>
+          <div style="display:flex;gap:8px;">
+            <input class="input mono" type="text" id="vid-output" placeholder="<input>/optimized" style="flex:1;" />
+            <button type="button" class="btn btn-secondary" id="vid-output-browse">Browse&hellip;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card elev-sm" style="padding:24px;gap:16px;">
+        <div class="card-kicker">Results</div>
+        <table class="table">
+          <thead><tr><th>File</th><th>Original size</th><th>Output size</th><th>Saved %</th><th>Resolution</th><th>Status</th></tr></thead>
+          <tbody id="vid-results-body">
+            <tr><td colspan="6" class="mono" style="opacity:0.5;">No results yet.</td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;">
+          <span class="mono" id="vid-summary" style="font-size:13px;opacity:0.7;"></span>
+          <button type="button" class="btn btn-primary" id="vid-run">
+            <span class="btn-label">Optimize</span>
+            <svg class="btn-icon-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <svg class="btn-icon-spinner is-hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9" opacity="0.25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FONTS TAB ============ -->
+    <section data-panel="fonts" hidden style="display:flex;flex-direction:column;gap:28px;">
+
+      <div class="dropzone" id="fonts-dropzone">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+        <div class="dropzone-title">Click to <span class="dropzone-link">browse</span> for a project folder to scan</div>
+        <div class="mono dropzone-hint">.ttf &middot; .otf &middot; .woff &middot; .woff2 &mdash; source files are never modified</div>
+      </div>
+
+      <div class="mono" style="font-size:12px;opacity:0.6;display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+        <span>FONTS_DIR: <strong id="fonts-dir-display">&mdash;</strong></span>
+        <span>CONFIG: <strong id="fonts-config-display">&mdash;</strong></span>
+        <button type="button" class="btn btn-ghost" id="fonts-override-dir" style="padding:2px 6px;font-size:12px;">override fonts dir</button>
+        <button type="button" class="btn btn-ghost" id="fonts-override-config" style="padding:2px 6px;font-size:12px;">override config</button>
+      </div>
+
+      <div class="card elev-sm" style="padding:24px;gap:20px;">
+        <div class="card-kicker">Options</div>
+
+        <div class="field">
+          <label>Character subsets</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;" id="fonts-subsets">
+            <label class="chip"><input type="checkbox" value="latin" checked><span>latin</span></label>
+            <label class="chip"><input type="checkbox" value="latin-ext"><span>latin-ext</span></label>
+            <label class="chip"><input type="checkbox" value="vietnamese"><span>vietnamese</span></label>
+            <label class="chip"><input type="checkbox" value="cyrillic"><span>cyrillic</span></label>
+            <label class="chip"><input type="checkbox" value="cyrillic-ext"><span>cyrillic-ext</span></label>
+            <label class="chip"><input type="checkbox" value="greek"><span>greek</span></label>
+            <label class="chip"><input type="checkbox" value="greek-ext"><span>greek-ext</span></label>
+            <label class="chip"><input type="checkbox" value="chinese-simplified"><span>chinese-simplified</span><span class="chip-warn" title="large output, prefer text file">!</span></label>
+            <label class="chip"><input type="checkbox" value="chinese-traditional"><span>chinese-traditional</span><span class="chip-warn" title="large output, prefer text file">!</span></label>
+            <label class="chip"><input type="checkbox" value="korean"><span>korean</span><span class="chip-warn" title="large output, prefer text file">!</span></label>
+            <label class="chip"><input type="checkbox" value="japanese"><span>japanese</span><span class="chip-warn" title="large output, prefer text file">!</span></label>
+            <label class="chip"><input type="checkbox" id="fonts-subset-all" value="all"><span>All</span></label>
+          </div>
+        </div>
+
+        <div class="hr" style="margin:0;"></div>
+
+        <div class="field">
+          <label>Subset to exact characters from a text file (recommended for CJK)</label>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button type="button" class="btn btn-secondary" id="fonts-textfile-browse">Choose file&hellip;</button>
+            <span class="mono" id="fonts-textfile-display" style="font-size:12px;opacity:0.5;">no file selected</span>
+            <button type="button" class="btn btn-ghost" id="fonts-textfile-clear" style="font-size:12px;padding:2px 6px;" hidden>clear</button>
+          </div>
+          <div class="mono" style="font-size:12px;opacity:0.55;margin-top:6px;">Overrides the subset selection above.</div>
+        </div>
+      </div>
+
+      <div class="card elev-sm" style="padding:24px;gap:16px;">
+        <div class="card-kicker">Detected fonts</div>
+        <table class="table">
+          <thead><tr><th>Include</th><th>Font file</th><th>Family</th><th>Weight min</th><th>Weight max</th><th>opsz</th><th>Weight override</th><th>Status</th></tr></thead>
+          <tbody id="fonts-table-body">
+            <tr><td colspan="8" class="mono" style="opacity:0.5;">No fonts scanned yet &mdash; browse for a project folder above.</td></tr>
+          </tbody>
+        </table>
+        <div class="mono" style="font-size:12px;opacity:0.55;">A range (e.g. 400-700) keeps a single, smaller variable font. Pins (e.g. 400, 700) produce one static file per weight.</div>
+        <div class="hr" style="margin:4px 0;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span class="mono" id="fonts-summary" style="font-size:13px;opacity:0.7;"></span>
+          <button type="button" class="btn btn-primary" id="fonts-run" disabled>
+            <span class="btn-label">Optimize</span>
+            <svg class="btn-icon-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <svg class="btn-icon-spinner is-hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9" opacity="0.25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="card elev-sm" style="padding:24px;gap:16px;" id="fonts-results-card" hidden>
+        <div class="card-kicker">Build results</div>
+        <table class="table">
+          <thead><tr><th>Output file</th><th>Original size</th><th>woff2 size</th><th>Saved %</th><th>Status</th></tr></thead>
+          <tbody id="fonts-results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="card elev-sm" style="padding:0;overflow:hidden;">
+        <button type="button" id="fontcss-toggle" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:transparent;border:0;cursor:pointer;font-family:var(--font-heading);font-weight:800;font-size:15px;color:var(--color-text);">
+          Generated @font-face CSS
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="fontcss-chevron"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div id="fontcss-panel" style="padding:0 24px 24px;" hidden>
+          <div class="mono" id="fontcss-code" style="background:var(--color-neutral-900);color:var(--color-neutral-100);font-size:13px;line-height:1.6;padding:18px 20px;white-space:pre;overflow-x:auto;">/* Build fonts to see generated @font-face rules here. */</div>
+          <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+            <button type="button" class="btn btn-secondary" id="fontcss-copy">Copy<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="0"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

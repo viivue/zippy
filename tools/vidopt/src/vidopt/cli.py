@@ -92,7 +92,7 @@ class FileResult:
 
 # ── ffmpeg resolution ─────────────────────────────────────────────────────────
 
-def _ffmpeg_not_found_exit() -> None:
+def _ffmpeg_not_found_message() -> str:
     if sys.platform == "darwin":
         hint = "  brew install ffmpeg"
     elif sys.platform.startswith("linux"):
@@ -102,14 +102,15 @@ def _ffmpeg_not_found_exit() -> None:
         )
     else:
         hint = f"  Download from: {FFMPEG_DOWNLOAD_URL}"
-    sys.exit(f"ERROR: ffmpeg not found. Install it and ensure it is on your PATH:\n{hint}")
+    return f"ffmpeg not found. Install it and ensure it is on your PATH:\n{hint}"
 
 
 def resolve_ffmpeg(skip_download: bool = False) -> tuple[str, str]:
     """Locate ffmpeg and ffprobe binaries.
 
     Search order: ~/.vidopt/bin/ → system PATH → auto-download (Windows only).
-    Returns (ffmpeg_path, ffprobe_path).
+    Returns (ffmpeg_path, ffprobe_path). Raises RuntimeError if ffmpeg cannot
+    be found or auto-downloaded.
     """
     ff_name  = f"ffmpeg{_EXE}"
     ffp_name = f"ffprobe{_EXE}"
@@ -125,14 +126,14 @@ def resolve_ffmpeg(skip_download: bool = False) -> tuple[str, str]:
         return ff_sys, ffp_sys
 
     if not _ON_WINDOWS or skip_download:
-        _ffmpeg_not_found_exit()
+        raise RuntimeError(_ffmpeg_not_found_message())
 
     download_ffmpeg()
 
     if ff_bin.is_file() and ffp_bin.is_file():
         return str(ff_bin), str(ffp_bin)
 
-    sys.exit("ERROR: Download appeared to succeed but binaries are missing from ~/.vidopt/bin/.")
+    raise RuntimeError("Download appeared to succeed but binaries are missing from ~/.vidopt/bin/.")
 
 
 def download_ffmpeg() -> None:
@@ -174,14 +175,12 @@ def download_ffmpeg() -> None:
         print("Done. ffmpeg is ready.\n")
 
     except Exception as exc:
-        print(
-            f"\nERROR: Could not auto-download ffmpeg: {exc}\n\n"
+        raise RuntimeError(
+            f"Could not auto-download ffmpeg: {exc}\n\n"
             "Please download it manually:\n"
             f"  {FFMPEG_DOWNLOAD_URL}\n"
-            f"Extract the zip and copy {ff_name} + {ffp_name} into {BIN_DIR}",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+            f"Extract the zip and copy {ff_name} + {ffp_name} into {BIN_DIR}"
+        ) from exc
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
@@ -367,10 +366,15 @@ def optimize_file(
 # ── Input gathering ───────────────────────────────────────────────────────────
 
 def gather_inputs(input_path: Path, recursive: bool) -> list[Path]:
+    """Resolve an input path to a list of video files.
+
+    Raises FileNotFoundError if the path does not exist, or ValueError if a
+    single file has an unsupported extension.
+    """
     if input_path.is_file():
         if input_path.suffix.lower() not in INPUT_EXTENSIONS:
-            sys.exit(
-                f"ERROR: '{input_path.name}' is not a supported video file "
+            raise ValueError(
+                f"'{input_path.name}' is not a supported video file "
                 f"({', '.join(sorted(INPUT_EXTENSIONS))})."
             )
         return [input_path]
@@ -383,7 +387,7 @@ def gather_inputs(input_path: Path, recursive: bool) -> list[Path]:
             files.extend(globber("*" + ext.upper()))
         return sorted(set(files))
 
-    sys.exit(f"ERROR: '{input_path}' does not exist.")
+    raise FileNotFoundError(f"'{input_path}' does not exist.")
 
 
 # ── Summary report ────────────────────────────────────────────────────────────
@@ -519,7 +523,10 @@ examples:
 
     args = parser.parse_args()
 
-    ffmpeg, ffprobe = resolve_ffmpeg(skip_download=args.skip_download)
+    try:
+        ffmpeg, ffprobe = resolve_ffmpeg(skip_download=args.skip_download)
+    except RuntimeError as exc:
+        sys.exit(f"ERROR: {exc}")
 
     if args.crf is not None:
         print("WARNING: --crf is deprecated — use --quality 1-5 instead.", file=sys.stderr)
@@ -536,7 +543,10 @@ examples:
         preset = SPEED_PRESET[args.speed if args.speed is not None else DEFAULT_SPEED]
 
     input_path = Path(args.input)
-    files = gather_inputs(input_path, recursive=args.recursive)
+    try:
+        files = gather_inputs(input_path, recursive=args.recursive)
+    except (FileNotFoundError, ValueError) as exc:
+        sys.exit(f"ERROR: {exc}")
 
     if not files:
         print("No supported video files found.")

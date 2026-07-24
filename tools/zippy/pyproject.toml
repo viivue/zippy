@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "zippy"
+version = "0.1.0"
+description = "Local web UI wrapping vidopt, imgopt, and fontslice behind a FastAPI server."
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "vidopt",
+    "imgopt",
+    "fontslice",
+]
+
+[project.optional-dependencies]
+window = [
+    "pywebview>=5.0",
+]
+
+[project.scripts]
+zippy = "zippy.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zippy"]
+
+[tool.uv.sources]
+vidopt = { path = "../vidopt" }
+imgopt = { path = "../imgopt" }
+fontslice = { path = "../fontslice" }

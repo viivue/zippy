@@ -1,4 +1,4 @@
-# Shared Ruff config for all tools in devkit.
+# Shared Ruff config for all tools in zippy.
 # Each tool inherits this automatically when ruff is run from the repo root
 # or from within a tool directory (ruff walks up to find the nearest config).
 

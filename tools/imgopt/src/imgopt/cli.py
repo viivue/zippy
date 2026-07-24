@@ -178,10 +178,15 @@ def optimize_file(
 # ── Input gathering ───────────────────────────────────────────────────────────
 
 def gather_inputs(input_path: Path, recursive: bool) -> list[Path]:
+    """Resolve an input path to a list of image files.
+
+    Raises FileNotFoundError if the path does not exist, or ValueError if a
+    single file has an unsupported extension.
+    """
     if input_path.is_file():
         if input_path.suffix.lower() not in INPUT_EXTENSIONS:
-            sys.exit(
-                f"ERROR: '{input_path.name}' is not a supported image file "
+            raise ValueError(
+                f"'{input_path.name}' is not a supported image file "
                 f"({', '.join(sorted(INPUT_EXTENSIONS))})."
             )
         return [input_path]
@@ -194,7 +199,7 @@ def gather_inputs(input_path: Path, recursive: bool) -> list[Path]:
             files.extend(globber("*" + ext.upper()))
         return sorted(set(files))
 
-    sys.exit(f"ERROR: '{input_path}' does not exist.")
+    raise FileNotFoundError(f"'{input_path}' does not exist.")
 
 
 # ── Summary report ────────────────────────────────────────────────────────────
@@ -330,7 +335,10 @@ examples:
         sys.exit("ERROR: --webp and --jpg are mutually exclusive.")
 
     input_path = Path(args.input)
-    files = gather_inputs(input_path, recursive=args.recursive)
+    try:
+        files = gather_inputs(input_path, recursive=args.recursive)
+    except (FileNotFoundError, ValueError) as exc:
+        sys.exit(f"ERROR: {exc}")
 
     if not files:
         print("No supported image files found.")
