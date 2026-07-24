@@ -34,7 +34,7 @@ def browse(
     mode: "file" (single), "files" (multi-select), or "folder". Returns the
     chosen path (str), list of paths ("files" mode), or None if cancelled.
     Raises RuntimeError if tkinter is unavailable. Dialog calls are
-    serialized — only one can be open at a time.
+    serialized: only one can be open at a time.
     """
     if not _TKINTER_AVAILABLE:
         raise RuntimeError("tkinter is not available on this system")

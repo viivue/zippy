@@ -77,7 +77,7 @@ generated `@font-face` CSS is shown in a copyable block afterward.
 ## Notes on design deviations from the CLIs
 
 - The Images and Videos tabs browse to one or more individual files (native
-  multi-select), not a folder — there's no recursive/subfolder scanning in
+  multi-select), not a folder: there's no recursive/subfolder scanning in
   the UI the way `--recursive` gives you on the CLIs. Select all the files
   you want in one go instead.
 - The Video tab only accepts `.mp4`/`.mov` and the Images tab only accepts

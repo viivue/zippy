@@ -276,7 +276,7 @@ body { margin: 0; }
 code, .mono { font-family: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consolas, monospace; }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   zippy additions — same visual language as Modernist/ViiVue above, for
+   zippy additions: same visual language as Modernist/ViiVue above, for
    controls the static mock didn't need to express (checkboxes, multi-select
    chips, dropzones, progress bars). Not part of the vendored design system.
    ══════════════════════════════════════════════════════════════════════ */

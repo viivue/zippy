@@ -1,4 +1,4 @@
-"""zippy — local web UI wrapping vidopt, imgopt, and fontslice.
+"""zippy: local web UI wrapping vidopt, imgopt, and fontslice.
 
 Usage:
     zippy [--port PORT] [--no-open] [--window]
@@ -55,7 +55,7 @@ def _run_window(port: int) -> None:
         import webview
     except ImportError:
         print(
-            "pywebview is not installed — install it with: pip install zippy[window]\n"
+            "pywebview is not installed, install it with: pip install zippy[window]\n"
             "Falling back to browser mode.",
             file=sys.stderr,
         )

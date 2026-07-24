@@ -222,7 +222,7 @@ def run_vidopt_job(job: Job, params: dict[str, Any]) -> None:
 
     for idx, source_file in enumerate(files):
         if output_root is None:
-            # Multiple individually-picked files with no explicit output —
+            # Multiple individually-picked files with no explicit output:
             # each lands next to its own source, not a shared folder.
             output_dir = source_file.parent / OUTPUT_SUBFOLDER
         elif input_path is not None and input_path.is_dir() and recursive:
@@ -342,7 +342,7 @@ def run_imgopt_job(job: Job, params: dict[str, Any]) -> None:
 
     for idx, source_file in enumerate(files):
         if output_root is None:
-            # Multiple individually-picked files with no explicit output —
+            # Multiple individually-picked files with no explicit output:
             # each lands next to its own source, not a shared folder.
             output_dir = source_file.parent / OUTPUT_SUBFOLDER
         elif input_path is not None and input_path.is_dir() and recursive:
