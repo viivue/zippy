@@ -150,6 +150,17 @@ function updateStepProgress(prefix, payload) {
   document.getElementById(`${prefix}-progress-count`).textContent = `${done} / ${steps.length}`;
 }
 
+function setButtonLoading(id, loading) {
+  const btn = document.getElementById(id);
+  btn.disabled = loading;
+  btn.classList.toggle("is-loading", loading);
+  btn.querySelector(".btn-label").textContent = loading ? "Optimizing" : "Optimize";
+  // SVGElement.hidden doesn't reliably reflect to the content attribute in
+  // every browser, so toggle visibility with a class instead of `.hidden`.
+  btn.querySelector(".btn-icon-arrow").classList.toggle("is-hidden", loading);
+  btn.querySelector(".btn-icon-spinner").classList.toggle("is-hidden", !loading);
+}
+
 function summaryText(payload) {
   const s = payload.summary || {};
   if (s.message) return s.message;
@@ -224,8 +235,7 @@ async function runImageJob() {
     dry_run: document.getElementById("img-dry-run").checked,
   };
 
-  const runBtn = document.getElementById("img-run");
-  runBtn.disabled = true;
+  setButtonLoading("img-run", true);
   initStepProgress("img", imgInputPaths.length);
   renderImgResults([]);
   document.getElementById("img-summary").textContent = "";
@@ -238,14 +248,14 @@ async function runImageJob() {
         updateStepProgress("img", payload);
       },
       onDone: (payload) => {
-        runBtn.disabled = false;
+        setButtonLoading("img-run", false);
         updateStepProgress("img", payload);
         renderImgResults(payload.results);
         document.getElementById("img-summary").textContent = summaryText(payload);
       },
     });
   } catch (err) {
-    runBtn.disabled = false;
+    setButtonLoading("img-run", false);
     document.getElementById("img-progress").hidden = true;
     alert(`Failed to start job: ${err.message}`);
   }
@@ -312,8 +322,7 @@ async function runVideoJob() {
     dry_run: document.getElementById("vid-dry-run").checked,
   };
 
-  const runBtn = document.getElementById("vid-run");
-  runBtn.disabled = true;
+  setButtonLoading("vid-run", true);
   initStepProgress("vid", vidInputPaths.length);
   renderVidResults([]);
   document.getElementById("vid-summary").textContent = "";
@@ -326,14 +335,14 @@ async function runVideoJob() {
         updateStepProgress("vid", payload);
       },
       onDone: (payload) => {
-        runBtn.disabled = false;
+        setButtonLoading("vid-run", false);
         updateStepProgress("vid", payload);
         renderVidResults(payload.results);
         document.getElementById("vid-summary").textContent = summaryText(payload);
       },
     });
   } catch (err) {
-    runBtn.disabled = false;
+    setButtonLoading("vid-run", false);
     document.getElementById("vid-progress").hidden = true;
     alert(`Failed to start job: ${err.message}`);
   }
@@ -490,8 +499,7 @@ async function runFontsJob() {
     text_file: fontsTextFile,
   };
 
-  const runBtn = document.getElementById("fonts-run");
-  runBtn.disabled = true;
+  setButtonLoading("fonts-run", true);
   initStepProgress("fonts", fonts.length);
   renderFontsResults([]);
   document.getElementById("fonts-summary").textContent = "";
@@ -504,7 +512,7 @@ async function runFontsJob() {
         updateStepProgress("fonts", payload);
       },
       onDone: (payload) => {
-        runBtn.disabled = false;
+        setButtonLoading("fonts-run", false);
         updateStepProgress("fonts", payload);
         renderFontsResults(payload.results);
         document.getElementById("fonts-summary").textContent = summaryText(payload);
@@ -514,7 +522,7 @@ async function runFontsJob() {
       },
     });
   } catch (err) {
-    runBtn.disabled = false;
+    setButtonLoading("fonts-run", false);
     document.getElementById("fonts-progress").hidden = true;
     alert(`Failed to start job: ${err.message}`);
   }

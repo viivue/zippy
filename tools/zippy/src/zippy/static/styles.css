@@ -115,6 +115,13 @@ figcaption {
 }
 .btn svg { display: block; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.is-loading:disabled { opacity: 1; cursor: wait; }
+.btn-icon-arrow.is-hidden, .btn-icon-spinner.is-hidden { display: none; }
+.btn-icon-spinner { animation: btn-spin 0.7s linear infinite; }
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .btn-icon-spinner { animation-duration: 1.6s; }
+}
 .btn-primary { background: var(--color-accent); color: var(--color-bg); }
 .btn-primary:hover { background: var(--color-accent-600); }
 .btn-primary:active { background: var(--color-accent-700); }
