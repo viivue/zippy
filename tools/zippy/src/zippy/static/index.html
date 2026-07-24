@@ -109,10 +109,12 @@
       <!-- results -->
       <div class="card elev-sm" style="padding:24px;gap:16px;">
         <div class="card-kicker">Results</div>
-        <div class="path-line" id="img-progress" hidden>
-          <span class="mono" id="img-progress-file"></span>
-          <div class="progress-track"><div class="progress-fill" id="img-progress-fill" style="width:0%;"></div></div>
-          <span class="mono" id="img-progress-pct">0%</span>
+        <div class="step-progress" id="img-progress" hidden>
+          <div class="step-progress-head">
+            <span class="mono step-progress-file" id="img-progress-file"></span>
+            <span class="mono step-progress-count" id="img-progress-count">0 / 0</span>
+          </div>
+          <div class="step-progress-track" id="img-progress-steps"></div>
         </div>
         <table class="table">
           <thead><tr><th>File</th><th>Original size</th><th>Output size</th><th>Saved %</th><th>Status</th></tr></thead>
@@ -195,10 +197,12 @@
 
       <div class="card elev-sm" style="padding:24px;gap:16px;">
         <div class="card-kicker">Results</div>
-        <div class="path-line" id="vid-progress" hidden>
-          <span class="mono" id="vid-progress-file"></span>
-          <div class="progress-track"><div class="progress-fill" id="vid-progress-fill" style="width:0%;"></div></div>
-          <span class="mono" id="vid-progress-pct">0%</span>
+        <div class="step-progress" id="vid-progress" hidden>
+          <div class="step-progress-head">
+            <span class="mono step-progress-file" id="vid-progress-file"></span>
+            <span class="mono step-progress-count" id="vid-progress-count">0 / 0</span>
+          </div>
+          <div class="step-progress-track" id="vid-progress-steps"></div>
         </div>
         <table class="table">
           <thead><tr><th>File</th><th>Original size</th><th>Output size</th><th>Saved %</th><th>Resolution</th><th>Status</th></tr></thead>
@@ -281,10 +285,12 @@
 
       <div class="card elev-sm" style="padding:24px;gap:16px;" id="fonts-results-card" hidden>
         <div class="card-kicker">Build results</div>
-        <div class="path-line" id="fonts-progress" hidden>
-          <span class="mono" id="fonts-progress-file"></span>
-          <div class="progress-track"><div class="progress-fill" id="fonts-progress-fill" style="width:0%;"></div></div>
-          <span class="mono" id="fonts-progress-pct">0%</span>
+        <div class="step-progress" id="fonts-progress" hidden>
+          <div class="step-progress-head">
+            <span class="mono step-progress-file" id="fonts-progress-file"></span>
+            <span class="mono step-progress-count" id="fonts-progress-count">0 / 0</span>
+          </div>
+          <div class="step-progress-track" id="fonts-progress-steps"></div>
         </div>
         <table class="table">
           <thead><tr><th>Output file</th><th>Original size</th><th>woff2 size</th><th>Saved %</th><th>Status</th></tr></thead>
