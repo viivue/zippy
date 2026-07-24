@@ -191,8 +191,13 @@ def run_vidopt_job(job: Job, params: dict[str, Any]) -> None:
 
     ffmpeg, ffprobe = resolve_ffmpeg()
 
-    input_path = Path(params["input"])
-    files = gather_inputs(input_path, recursive=recursive)
+    raw_input = params["input"]
+    if isinstance(raw_input, list):
+        input_path = None
+        files = [Path(p) for p in raw_input]
+    else:
+        input_path = Path(raw_input)
+        files = gather_inputs(input_path, recursive=recursive)
     if not files:
         job.set_summary(
             {
@@ -204,18 +209,23 @@ def run_vidopt_job(job: Job, params: dict[str, Any]) -> None:
         )
         return
 
-    if params.get("output"):
-        output_root = Path(params["output"])
-    else:
+    explicit_output = Path(params["output"]) if params.get("output") else None
+    if input_path is not None and explicit_output is None:
         base = input_path if input_path.is_dir() else input_path.parent
         output_root = base / OUTPUT_SUBFOLDER
+    else:
+        output_root = explicit_output
 
     total = len(files)
     net_saved = 0
     failures = 0
 
     for idx, source_file in enumerate(files):
-        if input_path.is_dir() and recursive:
+        if output_root is None:
+            # Multiple individually-picked files with no explicit output —
+            # each lands next to its own source, not a shared folder.
+            output_dir = source_file.parent / OUTPUT_SUBFOLDER
+        elif input_path is not None and input_path.is_dir() and recursive:
             rel = source_file.parent.relative_to(input_path)
             output_dir = output_root / rel
         else:
@@ -301,8 +311,13 @@ def run_imgopt_job(job: Job, params: dict[str, Any]) -> None:
     overwrite = bool(params.get("overwrite"))
     dry_run = bool(params.get("dry_run"))
 
-    input_path = Path(params["input"])
-    files = gather_inputs(input_path, recursive=recursive)
+    raw_input = params["input"]
+    if isinstance(raw_input, list):
+        input_path = None
+        files = [Path(p) for p in raw_input]
+    else:
+        input_path = Path(raw_input)
+        files = gather_inputs(input_path, recursive=recursive)
     if not files:
         job.set_summary(
             {
@@ -314,18 +329,23 @@ def run_imgopt_job(job: Job, params: dict[str, Any]) -> None:
         )
         return
 
-    if params.get("output"):
-        output_root = Path(params["output"])
-    else:
+    explicit_output = Path(params["output"]) if params.get("output") else None
+    if input_path is not None and explicit_output is None:
         base = input_path if input_path.is_dir() else input_path.parent
         output_root = base / OUTPUT_SUBFOLDER
+    else:
+        output_root = explicit_output
 
     total = len(files)
     net_saved = 0
     failures = 0
 
     for idx, source_file in enumerate(files):
-        if input_path.is_dir() and recursive:
+        if output_root is None:
+            # Multiple individually-picked files with no explicit output —
+            # each lands next to its own source, not a shared folder.
+            output_dir = source_file.parent / OUTPUT_SUBFOLDER
+        elif input_path is not None and input_path.is_dir() and recursive:
             rel = source_file.parent.relative_to(input_path)
             output_dir = output_root / rel
         else:

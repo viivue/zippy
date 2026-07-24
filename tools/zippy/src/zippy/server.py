@@ -36,7 +36,7 @@ def index() -> FileResponse:
 
 
 class BrowseRequest(BaseModel):
-    mode: Literal["file", "folder"] = "folder"
+    mode: Literal["file", "files", "folder"] = "folder"
     filetypes: list[tuple[str, str]] | None = None
 
 
@@ -47,17 +47,19 @@ def api_browse(body: BrowseRequest) -> dict:
             status_code=501, detail="tkinter is not available on this system"
         )
     try:
-        path = browse_mod.browse(body.mode, body.filetypes)
+        result = browse_mod.browse(body.mode, body.filetypes)
     except RuntimeError as exc:
         raise HTTPException(status_code=501, detail=str(exc)) from exc
-    return {"path": path}
+    if body.mode == "files":
+        return {"paths": result or []}
+    return {"path": result}
 
 
 # ── vidopt ────────────────────────────────────────────────────────────────────
 
 
 class VidoptJobRequest(BaseModel):
-    input: str
+    input: str | list[str]
     output: str | None = None
     quality: int = Field(default=VID_DEFAULT_QUALITY, ge=1, le=5)
     speed: Literal["fast", "balanced", "slow", "thorough"] = VID_DEFAULT_SPEED
@@ -78,7 +80,7 @@ def api_vidopt_job(body: VidoptJobRequest) -> dict:
 
 
 class ImgoptJobRequest(BaseModel):
-    input: str
+    input: str | list[str]
     output: str | None = None
     quality: int = Field(default=IMG_DEFAULT_QUALITY, ge=1, le=5)
     format: Literal["original", "webp", "jpg"] = "original"

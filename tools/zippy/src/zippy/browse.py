@@ -26,11 +26,15 @@ def available() -> bool:
     return _TKINTER_AVAILABLE
 
 
-def browse(mode: str, filetypes: list[tuple[str, str]] | None = None) -> str | None:
-    """Open a native file or folder picker. Returns the chosen path, or None if cancelled.
+def browse(
+    mode: str, filetypes: list[tuple[str, str]] | None = None
+) -> str | list[str] | None:
+    """Open a native file or folder picker.
 
-    mode: "file" or "folder". Raises RuntimeError if tkinter is unavailable.
-    Dialog calls are serialized — only one can be open at a time.
+    mode: "file" (single), "files" (multi-select), or "folder". Returns the
+    chosen path (str), list of paths ("files" mode), or None if cancelled.
+    Raises RuntimeError if tkinter is unavailable. Dialog calls are
+    serialized — only one can be open at a time.
     """
     if not _TKINTER_AVAILABLE:
         raise RuntimeError("tkinter is not available on this system")
@@ -41,13 +45,18 @@ def browse(mode: str, filetypes: list[tuple[str, str]] | None = None) -> str | N
         root.attributes("-topmost", True)
         try:
             if mode == "folder":
-                path = filedialog.askdirectory(parent=root)
+                result = filedialog.askdirectory(parent=root)
             else:
                 kwargs: dict = {"parent": root}
                 if filetypes:
                     kwargs["filetypes"] = [*filetypes, ("All files", "*.*")]
-                path = filedialog.askopenfilename(**kwargs)
+                if mode == "files":
+                    result = filedialog.askopenfilenames(**kwargs)
+                else:
+                    result = filedialog.askopenfilename(**kwargs)
         finally:
             root.destroy()
 
-    return path or None
+    if mode == "files":
+        return list(result) if result else None
+    return result or None

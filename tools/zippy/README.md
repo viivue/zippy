@@ -53,11 +53,12 @@ zippy --port 9000      # bind to a different port
 zippy --window         # open in a native desktop window instead of a browser
 ```
 
-Open the three tabs (**Images**, **Videos**, **Fonts**), browse to an input
-file or folder, set options (same defaults as each CLI), and click
+Open the three tabs (**Images**, **Videos**, **Fonts**), browse to one or
+more input files, set options (same defaults as each CLI), and click
 **Optimize**. Progress streams live; results land in an `optimized/`
-subfolder next to your input, same as running the CLI directly, unless you
-set an output folder override.
+subfolder next to each input file, same as running the CLI directly, unless
+you set an output folder override (in which case every file lands there,
+flat).
 
 **Fonts tab**: browse to a project folder to scan it for a `fonts/` directory
 and `_config.scss` (same auto-detection `fontslice` uses), review the
@@ -75,6 +76,10 @@ generated `@font-face` CSS is shown in a copyable block afterward.
 
 ## Notes on design deviations from the CLIs
 
+- The Images and Videos tabs browse to one or more individual files (native
+  multi-select), not a folder — there's no recursive/subfolder scanning in
+  the UI the way `--recursive` gives you on the CLIs. Select all the files
+  you want in one go instead.
 - The Video tab only accepts `.mp4`/`.mov` and the Images tab only accepts
   the formats Pillow can read (`.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`,
   `.bmp`, `.tiff`/`.tif`), matching `vidopt`/`imgopt` exactly.

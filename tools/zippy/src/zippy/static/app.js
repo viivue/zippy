@@ -56,6 +56,34 @@ async function browsePath(mode, filetypes) {
   }
 }
 
+async function browseFiles(filetypes) {
+  try {
+    const res = await fetch("/api/browse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "files", filetypes: filetypes || null }),
+    });
+    if (res.status === 501) {
+      const path = window.prompt("tkinter is unavailable — enter a file path:");
+      return path ? [path] : [];
+    }
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.paths || [];
+  } catch {
+    const path = window.prompt("Enter a file path:");
+    return path ? [path] : [];
+  }
+}
+
+function pathsSummary(paths) {
+  if (!paths.length) return "not selected";
+  if (paths.length <= 3) {
+    return paths.map((p) => p.split(/[\\/]/).pop()).join(", ");
+  }
+  return `${paths.length} files selected`;
+}
+
 function subscribeJob(jobId, { onUpdate, onDone }) {
   const es = new EventSource(`/api/jobs/${jobId}/events`);
   es.onmessage = (evt) => {
@@ -110,7 +138,7 @@ function initTabs() {
 
 // ── images tab ────────────────────────────────────────────────────────────────
 
-let imgInputPath = null;
+let imgInputPaths = [];
 
 function renderImgResults(results) {
   const body = document.getElementById("img-results-body");
@@ -133,19 +161,18 @@ function renderImgResults(results) {
 }
 
 async function runImageJob() {
-  if (!imgInputPath) {
-    alert("Choose an input folder or file first.");
+  if (!imgInputPaths.length) {
+    alert("Choose one or more input files first.");
     return;
   }
   const body = {
-    input: imgInputPath,
+    input: imgInputPaths,
     output: document.getElementById("img-output").value || null,
     quality: Number(document.getElementById("img-quality").value),
     format: document.querySelector('input[name="img-format"]:checked').value,
     max_width: numOrNull("img-max-width"),
     max_height: numOrNull("img-max-height"),
     keep_exif: document.getElementById("img-keep-exif").checked,
-    recursive: document.getElementById("img-subfolders").checked,
     overwrite: document.getElementById("img-overwrite").checked,
     dry_run: document.getElementById("img-dry-run").checked,
   };
@@ -181,12 +208,11 @@ function initImagesTab() {
   initQualitySlider("img-quality", "img-quality-value");
 
   document.getElementById("img-dropzone").addEventListener("click", async () => {
-    const mode = document.querySelector('input[name="img-browse-mode"]:checked').value;
-    const filetypes = mode === "file" ? [["Images", "*.jpg *.jpeg *.png *.webp *.gif *.bmp *.tiff *.tif"]] : null;
-    const path = await browsePath(mode, filetypes);
-    if (path) {
-      imgInputPath = path;
-      document.getElementById("img-input-path").textContent = path;
+    const filetypes = [["Images", "*.jpg *.jpeg *.png *.webp *.gif *.bmp *.tiff *.tif"]];
+    const paths = await browseFiles(filetypes);
+    if (paths.length) {
+      imgInputPaths = paths;
+      document.getElementById("img-input-path").textContent = pathsSummary(paths);
     }
   });
 
@@ -200,7 +226,7 @@ function initImagesTab() {
 
 // ── videos tab ────────────────────────────────────────────────────────────────
 
-let vidInputPath = null;
+let vidInputPaths = [];
 
 function renderVidResults(results) {
   const body = document.getElementById("vid-results-body");
@@ -224,18 +250,17 @@ function renderVidResults(results) {
 }
 
 async function runVideoJob() {
-  if (!vidInputPath) {
-    alert("Choose an input folder or file first.");
+  if (!vidInputPaths.length) {
+    alert("Choose one or more input files first.");
     return;
   }
   const body = {
-    input: vidInputPath,
+    input: vidInputPaths,
     output: document.getElementById("vid-output").value || null,
     quality: Number(document.getElementById("vid-quality").value),
     speed: document.querySelector('input[name="vid-speed"]:checked').value,
     h265: document.querySelector('input[name="vid-codec"]:checked').value === "h265",
     max_width: numOrNull("vid-max-width"),
-    recursive: document.getElementById("vid-subfolders").checked,
     overwrite: document.getElementById("vid-overwrite").checked,
     dry_run: document.getElementById("vid-dry-run").checked,
   };
@@ -271,12 +296,11 @@ function initVideosTab() {
   initQualitySlider("vid-quality", "vid-quality-value");
 
   document.getElementById("vid-dropzone").addEventListener("click", async () => {
-    const mode = document.querySelector('input[name="vid-browse-mode"]:checked').value;
-    const filetypes = mode === "file" ? [["Videos", "*.mp4 *.mov"]] : null;
-    const path = await browsePath(mode, filetypes);
-    if (path) {
-      vidInputPath = path;
-      document.getElementById("vid-input-path").textContent = path;
+    const filetypes = [["Videos", "*.mp4 *.mov"]];
+    const paths = await browseFiles(filetypes);
+    if (paths.length) {
+      vidInputPaths = paths;
+      document.getElementById("vid-input-path").textContent = pathsSummary(paths);
     }
   });
 

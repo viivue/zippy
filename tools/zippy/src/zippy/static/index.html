@@ -54,14 +54,9 @@
     <!-- ============ IMAGES TAB ============ -->
     <section data-panel="images" style="display:flex;flex-direction:column;gap:28px;">
 
-      <div class="seg" role="radiogroup" style="width:fit-content;">
-        <label class="seg-opt"><input type="radio" name="img-browse-mode" value="folder" checked>Folder</label>
-        <label class="seg-opt"><input type="radio" name="img-browse-mode" value="file">Single file</label>
-      </div>
-
       <div class="dropzone" id="img-dropzone">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
-        <div class="dropzone-title">Click to <span class="dropzone-link">browse</span> for a folder or file</div>
+        <div class="dropzone-title">Click to <span class="dropzone-link">browse</span> for one or more files</div>
         <div class="mono dropzone-hint">.jpg &middot; .jpeg &middot; .png &middot; .webp &middot; .gif &middot; .bmp &middot; .tiff &mdash; source files are never modified</div>
       </div>
       <div class="path-line">Input: <strong class="mono" id="img-input-path">not selected</strong></div>
@@ -96,9 +91,8 @@
 
         <div class="hr" style="margin:0;"></div>
 
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px 28px;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px 28px;">
           <label class="checkbox-row"><input type="checkbox" id="img-keep-exif" /><span class="checkbox-box"></span>Keep EXIF metadata</label>
-          <label class="checkbox-row"><input type="checkbox" id="img-subfolders" /><span class="checkbox-box"></span>Include subfolders</label>
           <label class="checkbox-row"><input type="checkbox" id="img-overwrite" /><span class="checkbox-box"></span>Overwrite existing outputs</label>
           <label class="checkbox-row"><input type="checkbox" id="img-dry-run" /><span class="checkbox-box"></span>Dry run</label>
         </div>
@@ -138,12 +132,8 @@
 
       <div class="dropzone" id="vid-dropzone">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
-        <div class="dropzone-title">Click to <span class="dropzone-link">browse</span> for a folder or file</div>
+        <div class="dropzone-title">Click to <span class="dropzone-link">browse</span> for one or more files</div>
         <div class="mono dropzone-hint">.mp4 &middot; .mov &mdash; source files are never modified</div>
-      </div>
-      <div class="seg" role="radiogroup" style="width:fit-content;">
-        <label class="seg-opt"><input type="radio" name="vid-browse-mode" value="folder" checked>Folder</label>
-        <label class="seg-opt"><input type="radio" name="vid-browse-mode" value="file">Single file</label>
       </div>
       <div class="path-line">Input: <strong class="mono" id="vid-input-path">not selected</strong></div>
 
@@ -189,8 +179,7 @@
 
         <div class="hr" style="margin:0;"></div>
 
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px 28px;">
-          <label class="checkbox-row"><input type="checkbox" id="vid-subfolders" /><span class="checkbox-box"></span>Include subfolders</label>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px 28px;">
           <label class="checkbox-row"><input type="checkbox" id="vid-overwrite" /><span class="checkbox-box"></span>Overwrite</label>
           <label class="checkbox-row"><input type="checkbox" id="vid-dry-run" /><span class="checkbox-box"></span>Dry run</label>
         </div>
