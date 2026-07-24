@@ -3,36 +3,53 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>devkit</title>
-<link rel="icon" href="data:,">
+<title>zippy</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="icon" href="/static/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
 <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);display:flex;flex-direction:column;">
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);display:grid;grid-template-columns:240px minmax(0,1fr);">
 
-  <!-- header -->
-  <header style="display:flex;align-items:baseline;gap:14px;padding:18px 32px;border-bottom:2px solid var(--color-divider);">
-    <span style="font-family:var(--font-heading);font-weight:800;font-size:20px;letter-spacing:-0.01em;">devkit</span>
-    <span class="mono" style="font-size:12px;opacity:0.55;">ViiVue internal tools for dev</span>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
-      <span class="mono" style="font-size:11px;opacity:0.45;">v0.1.0</span>
+  <!-- left rail -->
+  <aside style="border-right:2px solid var(--color-divider);display:flex;flex-direction:column;background:var(--color-bg);position:sticky;top:0;height:100vh;overflow-y:auto;">
+    <div style="padding:22px 24px 20px;border-bottom:2px solid var(--color-divider);">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:22px;letter-spacing:-0.01em;line-height:1;">zippy</div>
+      <div class="mono" style="font-size:11px;opacity:0.55;margin-top:8px;">ViiVue optimization tools for dev</div>
     </div>
-  </header>
 
-  <!-- tab bar -->
-  <nav style="display:flex;gap:4px;padding:0 32px;border-bottom:2px solid var(--color-divider);" role="tablist">
-    <button type="button" class="tab-btn" data-tab="images" role="tab" aria-selected="true">
-      Images<span class="mono" style="font-size:11px;opacity:0.55;">imgopt</span>
-    </button>
-    <button type="button" class="tab-btn" data-tab="videos" role="tab" aria-selected="false">
-      Videos<span class="mono" style="font-size:11px;opacity:0.55;">vidopt</span>
-    </button>
-    <button type="button" class="tab-btn" data-tab="fonts" role="tab" aria-selected="false">
-      Fonts<span class="mono" style="font-size:11px;opacity:0.55;">fontslice</span>
-    </button>
-  </nav>
+    <nav style="display:flex;flex-direction:column;flex:1;" role="tablist">
+      <button type="button" class="tab-btn" data-tab="images" role="tab" aria-selected="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><rect x="3" y="3" width="18" height="18"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+        <span style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;line-height:1.1;">
+          <span>Images</span>
+          <span class="mono" style="font-size:10.5px;opacity:0.55;font-weight:400;">imgopt</span>
+        </span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="videos" role="tab" aria-selected="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12"/></svg>
+        <span style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;line-height:1.1;">
+          <span>Videos</span>
+          <span class="mono" style="font-size:10.5px;opacity:0.55;font-weight:400;">vidopt</span>
+        </span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="fonts" role="tab" aria-selected="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/></svg>
+        <span style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;line-height:1.1;">
+          <span>Fonts</span>
+          <span class="mono" style="font-size:10.5px;opacity:0.55;font-weight:400;">fontslice</span>
+        </span>
+      </button>
+    </nav>
 
-  <main style="flex:1;max-width:1180px;width:100%;margin:0 auto;padding:32px;display:flex;flex-direction:column;gap:28px;">
+    <div style="padding:16px 24px;border-top:2px solid var(--color-divider);display:flex;flex-direction:column;gap:4px;">
+      <span class="mono" style="font-size:11px;opacity:0.5;">v0.1.0</span>
+      <span class="mono" style="font-size:11px;opacity:0.5;">&copy; 2026 ViiVue</span>
+    </div>
+  </aside>
+
+  <main style="width:100%;padding:32px 40px;display:flex;flex-direction:column;gap:28px;box-sizing:border-box;">
 
     <!-- ============ IMAGES TAB ============ -->
     <section data-panel="images" style="display:flex;flex-direction:column;gap:28px;">
@@ -132,37 +149,43 @@
 
       <div class="card elev-sm" style="padding:24px;gap:20px;">
         <div class="card-kicker">Options</div>
-        <div class="field">
-          <label>Quality</label>
-          <div style="display:flex;align-items:center;gap:12px;max-width:520px;">
-            <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Smallest</span>
-            <input type="range" id="vid-quality" min="1" max="5" step="1" value="4" style="flex:1;accent-color:var(--color-accent);" />
-            <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Best quality</span>
-            <span class="mono" id="vid-quality-value" style="font-size:13px;font-weight:600;background:var(--color-accent-100);color:var(--color-accent-800);padding:2px 8px;min-width:18px;text-align:center;">4</span>
+
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:24px 28px;">
+          <div class="field">
+            <label>Quality</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Smallest</span>
+              <input type="range" id="vid-quality" min="1" max="5" step="1" value="4" style="flex:1;accent-color:var(--color-accent);" />
+              <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Best</span>
+              <span class="mono" id="vid-quality-value" style="font-size:13px;font-weight:600;background:var(--color-accent-100);color:var(--color-accent-800);padding:2px 8px;min-width:18px;text-align:center;">4</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Max width (px, optional)</label>
+            <input class="input mono" type="number" id="vid-max-width" placeholder="e.g. 1920" />
           </div>
         </div>
 
-        <div class="field">
-          <label>Speed</label>
-          <div class="seg" role="radiogroup" style="width:fit-content;">
-            <label class="seg-opt"><input type="radio" name="vid-speed" value="fast" />fast</label>
-            <label class="seg-opt"><input type="radio" name="vid-speed" value="balanced" />balanced</label>
-            <label class="seg-opt"><input type="radio" name="vid-speed" value="slow" checked />slow</label>
-            <label class="seg-opt"><input type="radio" name="vid-speed" value="thorough" />thorough</label>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:24px 28px;">
+          <div class="field">
+            <label>Speed</label>
+            <div class="seg" role="radiogroup" style="width:100%;">
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-speed" value="fast" />fast</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-speed" value="balanced" />balanced</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-speed" value="slow" checked />slow</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-speed" value="thorough" />thorough</label>
+            </div>
+            <div class="mono" style="font-size:12px;opacity:0.55;margin-top:6px;">slower = smaller files</div>
           </div>
-          <div class="mono" style="font-size:12px;opacity:0.55;margin-top:6px;">slower = smaller files</div>
-        </div>
-
-        <div class="field">
-          <label>Codec</label>
-          <div class="seg" role="radiogroup" style="width:fit-content;">
-            <label class="seg-opt"><input type="radio" name="vid-codec" value="h264" checked />H.264</label>
-            <label class="seg-opt"><input type="radio" name="vid-codec" value="h265" />H.265</label>
+          <div class="field">
+            <label>Codec</label>
+            <div class="seg" role="radiogroup" style="width:100%;">
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-codec" value="h264" checked />H.264</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="vid-codec" value="h265" />H.265</label>
+            </div>
+            <div class="mono" style="font-size:12px;opacity:0.55;margin-top:6px;">H.265: smaller files, modern browsers only</div>
           </div>
-          <div class="mono" style="font-size:12px;opacity:0.55;margin-top:6px;">H.265: smaller files, modern browsers only</div>
         </div>
-
-        <div class="field" style="max-width:260px;"><label>Max width (px, optional)</label><input class="input mono" type="number" id="vid-max-width" placeholder="e.g. 1920" /></div>
 
         <div class="hr" style="margin:0;"></div>
 

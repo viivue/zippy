@@ -1,6 +1,6 @@
 """Native file/folder picker via tkinter (stdlib), for browsing local paths.
 
-devkit-ui runs on the user's own machine and works with file *paths*, not
+zippy runs on the user's own machine and works with file *paths*, not
 uploads, so this is the only way the browser-based UI can reach the
 filesystem without the user typing a path by hand. If tkinter isn't
 available, `available()` returns False and the frontend falls back to a

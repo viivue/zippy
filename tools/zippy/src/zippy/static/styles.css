@@ -1,5 +1,5 @@
 /* Modernist — design-system tokens and component classes, vendored from the
-   "ViiVue Dev Kit" Claude Design project so devkit-ui works fully offline
+   "ViiVue Dev Kit" Claude Design project so zippy works fully offline
    (aside from the optional Archivo webfont, which falls back to system-ui). */
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap');
 
@@ -276,7 +276,7 @@ body { margin: 0; }
 code, .mono { font-family: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consolas, monospace; }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   devkit-ui additions — same visual language as Modernist/ViiVue above, for
+   zippy additions — same visual language as Modernist/ViiVue above, for
    controls the static mock didn't need to express (checkboxes, multi-select
    chips, dropzones, progress bars). Not part of the vendored design system.
    ══════════════════════════════════════════════════════════════════════ */
@@ -323,11 +323,16 @@ code, .mono { font-family: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consol
 .progress-fill { height: 100%; background: var(--color-accent); transition: width 0.2s ease; }
 
 .tab-btn {
-  padding: 14px 4px; margin-right: 26px; background: transparent; border: 0;
-  border-bottom: 2px solid transparent; cursor: pointer;
+  padding: 14px 22px; background: transparent; border: 0;
+  border-left: 4px solid transparent; cursor: pointer;
   font-family: var(--font-heading); font-weight: 800; font-size: 15px; color: var(--color-text);
-  display: flex; flex-direction: column; gap: 2px; align-items: flex-start; margin-bottom: -2px; opacity: 0.5;
+  display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
 }
-.tab-btn[aria-selected="true"] { border-bottom-color: var(--color-accent); opacity: 1; }
+.tab-btn:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.tab-btn[aria-selected="true"] {
+  background: var(--color-accent); border-left-color: var(--color-accent-800);
+  color: var(--vii-color-on-primary);
+}
+.tab-btn[aria-selected="true"]:hover { background: var(--color-accent); }
 
 [hidden] { display: none !important; }

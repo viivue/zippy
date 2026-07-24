@@ -1,13 +1,13 @@
-"""devkit-ui — local web UI wrapping vidopt, imgopt, and fontslice.
+"""zippy — local web UI wrapping vidopt, imgopt, and fontslice.
 
 Usage:
-    devkit-ui [--port PORT] [--no-open] [--window]
+    zippy [--port PORT] [--no-open] [--window]
 
 Options:
     --port PORT   Port to bind to (default: 8765)
     --no-open     Don't automatically open a browser tab on start
     --window      Open in a native pywebview window instead of the browser
-                  (requires the [window] extra: pip install devkit-ui[window])
+                  (requires the [window] extra: pip install zippy[window])
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ def _run_window(port: int) -> None:
         import webview
     except ImportError:
         print(
-            "pywebview is not installed — install it with: pip install devkit-ui[window]\n"
+            "pywebview is not installed — install it with: pip install zippy[window]\n"
             "Falling back to browser mode.",
             file=sys.stderr,
         )
@@ -66,7 +66,7 @@ def _run_window(port: int) -> None:
     server_thread.start()
 
     url = f"http://{HOST}:{port}/"
-    webview.create_window("devkit", url)
+    webview.create_window("zippy", url)
     webview.start()
 
 
@@ -80,7 +80,7 @@ def _run_browser_mode(port: int, no_open: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="devkit-ui",
+        prog="zippy",
         description="Local web UI wrapping vidopt, imgopt, and fontslice.",
     )
     parser.add_argument(

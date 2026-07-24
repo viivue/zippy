@@ -21,7 +21,7 @@ from .runners import run_fontslice_job, run_imgopt_job, run_vidopt_job
 
 STATIC_DIR = Path(__file__).parent / "static"
 
-app = FastAPI(title="devkit-ui")
+app = FastAPI(title="zippy")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 registry = JobRegistry()

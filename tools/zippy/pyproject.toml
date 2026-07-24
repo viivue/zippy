@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "devkit-ui"
+name = "zippy"
 version = "0.1.0"
 description = "Local web UI wrapping vidopt, imgopt, and fontslice behind a FastAPI server."
 requires-python = ">=3.10"
@@ -21,10 +21,10 @@ window = [
 ]
 
 [project.scripts]
-devkit-ui = "devkit_ui.cli:main"
+zippy = "zippy.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/devkit_ui"]
+packages = ["src/zippy"]
 
 [tool.uv.sources]
 vidopt = { path = "../vidopt" }

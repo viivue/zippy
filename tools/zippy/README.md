@@ -1,4 +1,4 @@
-# devkit-ui
+# zippy
 
 A local web UI that wraps `vidopt`, `imgopt`, and `fontslice` behind a single
 tabbed page. Runs entirely on your machine, the server only binds to
@@ -17,7 +17,7 @@ uploads. Source files are never modified, same as the CLIs.
 
 ## Install
 
-devkit-ui depends on `vidopt`, `imgopt`, and `fontslice` as local path
+zippy depends on `vidopt`, `imgopt`, and `fontslice` as local path
 dependencies (declared under `[tool.uv.sources]` in `pyproject.toml`), so it
 is **uv-first**: `uv tool install` resolves those paths automatically. `pipx`
 does not understand intra-repo path dependencies the same way, so it isn't
@@ -27,30 +27,30 @@ either).
 From the repo root:
 
 ```sh
-uv tool install ./tools/devkit-ui
+uv tool install ./tools/zippy
 ```
 
-To pick up code changes to devkit-ui *or* to vidopt/imgopt/fontslice, reinstall:
+To pick up code changes to zippy *or* to vidopt/imgopt/fontslice, reinstall:
 
 ```sh
-uv tool install --reinstall ./tools/devkit-ui
+uv tool install --reinstall ./tools/zippy
 ```
 
 Optional: install the `[window]` extra for the native desktop window (Phase 2):
 
 ```sh
-uv tool install ./tools/devkit-ui --with pywebview
+uv tool install ./tools/zippy --with pywebview
 ```
 
-Run `devkit-ui --help` to verify.
+Run `zippy --help` to verify.
 
 ## Usage
 
 ```sh
-devkit-ui                  # start the server and open a browser tab
-devkit-ui --no-open        # start the server without opening a browser
-devkit-ui --port 9000      # bind to a different port
-devkit-ui --window         # open in a native desktop window instead of a browser
+zippy                  # start the server and open a browser tab
+zippy --no-open        # start the server without opening a browser
+zippy --port 9000      # bind to a different port
+zippy --window         # open in a native desktop window instead of a browser
 ```
 
 Open the three tabs (**Images**, **Videos**, **Fonts**), browse to an input
