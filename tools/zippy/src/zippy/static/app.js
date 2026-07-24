@@ -97,59 +97,6 @@ function subscribeJob(jobId, { onUpdate, onDone }) {
   es.onerror = () => es.close();
 }
 
-// Renders one block per unit of work so completion reads as discrete steps
-// lighting up left-to-right, not just a percentage sweeping across a bar.
-
-function initStepProgress(prefix, total) {
-  const track = document.getElementById(`${prefix}-progress-steps`);
-  track.innerHTML = "";
-  track.setAttribute("role", "progressbar");
-  track.setAttribute("aria-valuemin", "0");
-  track.setAttribute("aria-valuenow", "0");
-  track.setAttribute("aria-valuemax", String(total));
-  for (let i = 0; i < total; i++) {
-    track.appendChild(document.createElement("div")).className = "step";
-  }
-  document.getElementById(`${prefix}-progress-file`).textContent = "";
-  document.getElementById(`${prefix}-progress-count`).textContent = `0 / ${total}`;
-  document.getElementById(`${prefix}-progress`).hidden = false;
-}
-
-function updateStepProgress(prefix, payload) {
-  const track = document.getElementById(`${prefix}-progress-steps`);
-  const results = payload.results || [];
-  const done = results.length;
-  const running = payload.status === "running" || payload.status === "queued";
-
-  // Some jobs (e.g. font weight-pin expansion) can reveal more steps than
-  // were predicted up front: grow the bar rather than losing a step.
-  const needed = done + (running ? 1 : 0);
-  while (track.children.length < needed) {
-    track.appendChild(document.createElement("div")).className = "step";
-  }
-
-  const steps = track.children;
-  const activeIndex = running ? done : -1;
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i];
-    if (i < done) {
-      const failed = results[i].status === "FAILED";
-      step.classList.remove(failed ? "is-done" : "is-failed");
-      step.classList.add(failed ? "is-failed" : "is-done");
-      step.classList.remove("is-active");
-    } else if (i === activeIndex) {
-      if (!step.classList.contains("is-active")) step.classList.add("is-active");
-    } else {
-      step.classList.remove("is-active", "is-done", "is-failed");
-    }
-  }
-
-  track.setAttribute("aria-valuemax", String(steps.length));
-  track.setAttribute("aria-valuenow", String(done));
-  document.getElementById(`${prefix}-progress-file`).textContent = payload.current_file || "";
-  document.getElementById(`${prefix}-progress-count`).textContent = `${done} / ${steps.length}`;
-}
-
 function setButtonLoading(id, loading) {
   const btn = document.getElementById(id);
   btn.disabled = loading;
@@ -237,7 +184,6 @@ async function runImageJob() {
   };
 
   setButtonLoading("img-run", true);
-  initStepProgress("img", imgInputPaths.length);
   renderImgResults(imgPastResults);
   document.getElementById("img-summary").textContent = "";
 
@@ -246,11 +192,9 @@ async function runImageJob() {
     subscribeJob(job_id, {
       onUpdate: (payload) => {
         renderImgResults([...imgPastResults, ...payload.results]);
-        updateStepProgress("img", payload);
       },
       onDone: (payload) => {
         setButtonLoading("img-run", false);
-        updateStepProgress("img", payload);
         imgPastResults = [...imgPastResults, ...payload.results];
         renderImgResults(imgPastResults);
         document.getElementById("img-summary").textContent = summaryText(payload);
@@ -258,7 +202,6 @@ async function runImageJob() {
     });
   } catch (err) {
     setButtonLoading("img-run", false);
-    document.getElementById("img-progress").hidden = true;
     alert(`Failed to start job: ${err.message}`);
   }
 }
@@ -326,7 +269,6 @@ async function runVideoJob() {
   };
 
   setButtonLoading("vid-run", true);
-  initStepProgress("vid", vidInputPaths.length);
   renderVidResults(vidPastResults);
   document.getElementById("vid-summary").textContent = "";
 
@@ -335,11 +277,9 @@ async function runVideoJob() {
     subscribeJob(job_id, {
       onUpdate: (payload) => {
         renderVidResults([...vidPastResults, ...payload.results]);
-        updateStepProgress("vid", payload);
       },
       onDone: (payload) => {
         setButtonLoading("vid-run", false);
-        updateStepProgress("vid", payload);
         vidPastResults = [...vidPastResults, ...payload.results];
         renderVidResults(vidPastResults);
         document.getElementById("vid-summary").textContent = summaryText(payload);
@@ -347,7 +287,6 @@ async function runVideoJob() {
     });
   } catch (err) {
     setButtonLoading("vid-run", false);
-    document.getElementById("vid-progress").hidden = true;
     alert(`Failed to start job: ${err.message}`);
   }
 }
@@ -505,7 +444,6 @@ async function runFontsJob() {
   };
 
   setButtonLoading("fonts-run", true);
-  initStepProgress("fonts", fonts.length);
   renderFontsResults(fontsPastResults);
   document.getElementById("fonts-summary").textContent = "";
 
@@ -514,11 +452,9 @@ async function runFontsJob() {
     subscribeJob(job_id, {
       onUpdate: (payload) => {
         renderFontsResults([...fontsPastResults, ...payload.results]);
-        updateStepProgress("fonts", payload);
       },
       onDone: (payload) => {
         setButtonLoading("fonts-run", false);
-        updateStepProgress("fonts", payload);
         fontsPastResults = [...fontsPastResults, ...payload.results];
         renderFontsResults(fontsPastResults);
         document.getElementById("fonts-summary").textContent = summaryText(payload);
@@ -529,7 +465,6 @@ async function runFontsJob() {
     });
   } catch (err) {
     setButtonLoading("fonts-run", false);
-    document.getElementById("fonts-progress").hidden = true;
     alert(`Failed to start job: ${err.message}`);
   }
 }
