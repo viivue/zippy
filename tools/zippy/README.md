@@ -5,6 +5,17 @@ tabbed page. Runs entirely on your machine, the server only binds to
 `127.0.0.1`, and every job works with file/folder *paths* you browse to, not
 uploads. Source files are never modified, same as the CLIs.
 
+## Quick start
+
+```sh
+uv tool install ./tools/zippy
+zippy
+```
+
+A browser tab opens at `http://127.0.0.1:8765`. Pick a file or folder on the
+Images, Videos, or Fonts tab and click **Optimize**. See [Usage](#usage) below
+for more, or the requirements/install steps if this is your first run.
+
 ## Requirements
 
 - Python 3.10 or later

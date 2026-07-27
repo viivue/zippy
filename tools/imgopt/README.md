@@ -1,8 +1,19 @@
 # imgopt
 
-Python command-line tool for optimising images for web delivery.
+Command-line tool for optimizing images for web delivery.
 Compresses JPEG, PNG, WebP, GIF, BMP, and TIFF files using Pillow.
 Source files are never modified or deleted. EXIF metadata is stripped by default.
+
+## Quick start
+
+```sh
+uv tool install ./tools/imgopt
+imgopt photo.jpg
+```
+
+That compresses `photo.jpg` and writes the result to `optimized/`. See below
+for install details if you don't have `uv` yet, or [Usage](#usage) for more
+examples.
 
 ## Requirements
 
@@ -14,7 +25,7 @@ Python 3.10+ and the following package (installed automatically):
 
 ## Install
 
-### Step 1 - Python 3.10 or later
+### Step 1: Python 3.10 or later
 
 Check if Python is already installed:
 
@@ -28,7 +39,7 @@ If it is missing or older than 3.10, download it from
 > **Windows tip:** In the installer check "Add Python to PATH" before clicking
 > Install Now.
 
-### Step 2 - install uv or pipx
+### Step 2: install uv or pipx
 
 #### uv (recommended)
 
@@ -55,7 +66,7 @@ pipx ensurepath
 
 Close and reopen your terminal after `ensurepath`.
 
-### Step 3 - install imgopt
+### Step 3: install imgopt
 
 From the repo root:
 
@@ -117,7 +128,7 @@ imgopt ./raw-images --recursive --overwrite
 | `1` | 45 | 9 |
 
 JPEG and WebP quality is lossy (higher = better).
-PNG compression is lossless — only file size changes, not visual quality.
+PNG compression is lossless, only file size changes, not visual quality.
 
 ## Format conversion (`--webp` / `--jpg`)
 
@@ -125,10 +136,10 @@ By default each file is saved in its original format (except BMP and TIFF, which
 are converted to PNG). Use `--webp` or `--jpg` to convert everything to a single
 format. The two flags are mutually exclusive.
 
-**`--webp`** — WebP typically produces smaller files than JPEG or PNG at equivalent
+**`--webp`**: WebP typically produces smaller files than JPEG or PNG at equivalent
 visual quality and is supported by all modern browsers.
 
-**`--jpg`** — converts to JPEG. Images with transparency (e.g. PNG with alpha) have
+**`--jpg`**: converts to JPEG. Images with transparency (e.g. PNG with alpha) have
 their transparent areas dropped (filled with black) because JPEG does not support
 an alpha channel.
 
@@ -162,7 +173,7 @@ Files marked `LARGER` are kept but flagged. This can happen when the source is
 already well-compressed or when the format has limited compression headroom (e.g.
 small GIFs or highly optimized PNGs).
 
-Files marked `SKIPPED` already have an output in place — pass `--overwrite` to
+Files marked `SKIPPED` already have an output in place, pass `--overwrite` to
 re-process them.
 
 ## Development
@@ -173,8 +184,8 @@ uv venv && uv pip install -e .
 imgopt --help
 ```
 
-The `-e` flag installs in editable mode — source changes take effect immediately
-without reinstalling.
+The `-e` flag installs in editable mode, so source changes take effect
+immediately without reinstalling.
 
 If you add or change dependencies in `pyproject.toml`, re-run:
 

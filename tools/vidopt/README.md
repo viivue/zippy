@@ -1,17 +1,28 @@
 # vidopt
 
-Python command-line tool for optimising MP4 and MOV videos for web delivery.
+Command-line tool for optimizing MP4 and MOV videos for web delivery.
 Produces streaming-ready H.264 MP4 files sized for the web without sacrificing
 noticeable quality. Source files are never modified or deleted.
+
+## Quick start
+
+```sh
+uv tool install ./tools/vidopt
+vidopt video.mp4
+```
+
+That re-encodes `video.mp4` and writes the result to `video/optimized/`. See
+below for install details if you don't have `uv` yet, or [Usage](#usage) for
+more examples.
 
 ## Requirements
 
 - Python 3.10 or later
-- ffmpeg (auto-downloaded on Windows; see below for other platforms)
+- ffmpeg (auto-downloaded on Windows; see [ffmpeg](#ffmpeg) below for other platforms)
 
 ## Install
 
-### Step 1 - Python 3.10 or later
+### Step 1: Python 3.10 or later
 
 Check if Python is already installed:
 
@@ -25,7 +36,7 @@ If it is missing or older than 3.10, download it from
 > **Windows tip:** In the installer check "Add Python to PATH" before clicking
 > Install Now.
 
-### Step 2 - install uv or pipx
+### Step 2: install uv or pipx
 
 #### uv (recommended)
 
@@ -52,7 +63,7 @@ pipx ensurepath
 
 Close and reopen your terminal after `ensurepath`.
 
-### Step 3 - install vidopt
+### Step 3: install vidopt
 
 From the repo root:
 
@@ -70,34 +81,6 @@ Pull the latest code, then reinstall:
 uv tool install --reinstall ./tools/vidopt
 # or
 pipx install --force ./tools/vidopt
-```
-
-## ffmpeg
-
-vidopt looks for ffmpeg and ffprobe in this order:
-
-1. `~/.vidopt/bin/`
-2. System PATH
-
-**Windows:** vidopt auto-downloads a static build from
-[gyan.dev](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip)
-on first run and places the binaries in `~\.vidopt\bin\`.
-
-> **Offline networks:** Download the zip manually, extract it, and copy
-> `ffmpeg.exe` + `ffprobe.exe` into `%USERPROFILE%\.vidopt\bin\`.
-> Then pass `--skip-download` to prevent any network access.
-
-**macOS**
-
-```sh
-brew install ffmpeg
-```
-
-**Linux**
-
-```sh
-sudo apt install ffmpeg   # Debian / Ubuntu
-sudo dnf install ffmpeg   # Fedora / RHEL
 ```
 
 ## Usage
@@ -134,7 +117,7 @@ vidopt ./raw-footage --recursive --overwrite
 | Value | Result |
 |-------|--------|
 | `5` | Near-lossless, largest files |
-| `4` | **Default** - high quality, good compression |
+| `4` | **Default**, high quality, good compression |
 | `3` | Balanced, noticeably smaller |
 | `2` | Small file priority |
 | `1` | Aggressive compression, smallest files |
@@ -149,6 +132,34 @@ Slower encodes produce smaller files at the same quality level.
 | `balanced` | Moderate | Moderate |
 | `slow` | **Default** | Smaller |
 | `thorough` | Slowest | Smallest |
+
+## ffmpeg
+
+vidopt looks for ffmpeg and ffprobe in this order:
+
+1. `~/.vidopt/bin/`
+2. System PATH
+
+**Windows:** vidopt auto-downloads a static build from
+[gyan.dev](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip)
+on first run and places the binaries in `~\.vidopt\bin\`.
+
+> **Offline networks:** Download the zip manually, extract it, and copy
+> `ffmpeg.exe` + `ffprobe.exe` into `%USERPROFILE%\.vidopt\bin\`.
+> Then pass `--skip-download` to prevent any network access.
+
+**macOS**
+
+```sh
+brew install ffmpeg
+```
+
+**Linux**
+
+```sh
+sudo apt install ffmpeg   # Debian / Ubuntu
+sudo dnf install ffmpeg   # Fedora / RHEL
+```
 
 ## End-of-run report
 
@@ -168,7 +179,7 @@ Net saved: 98.44 MB
 Files marked `LARGER` are kept but flagged. This sometimes happens when the
 source was already well-compressed or encoded with a modern codec at low bitrate.
 
-Files marked `SKIPPED` already have an output in place — pass `--overwrite` to
+Files marked `SKIPPED` already have an output in place, pass `--overwrite` to
 re-encode them.
 
 When batch-processing more than one file, a progress bar tracks overall progress.
@@ -181,8 +192,8 @@ uv venv && uv pip install -e .
 vidopt --help
 ```
 
-The `-e` flag installs in editable mode — source changes take effect immediately
-without reinstalling.
+The `-e` flag installs in editable mode, so source changes take effect
+immediately without reinstalling.
 
 If you add or change dependencies in `pyproject.toml`, re-run:
 
