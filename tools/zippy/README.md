@@ -19,7 +19,7 @@ for more, or the requirements/install steps if this is your first run.
 ## Requirements
 
 - Python 3.10 or later
-- `uv` (see the root [README](../../README.md#installing-a-tool) for install steps)
+- `uv` (see the root [README](../../README.md#installing) for install steps)
 - ffmpeg on PATH or auto-downloadable (only needed for the Video tab, same
   requirement as `vidopt`)
 - A desktop session for the native folder/file picker (uses `tkinter`, bundled
