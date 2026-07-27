@@ -7,160 +7,33 @@
 ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey?style=flat-square)
 ![Maintained by ViiVue](https://img.shields.io/badge/maintained%20by-ViiVue-f1c400?style=flat-square)
 
-A monorepo of standalone Python command-line tools for internal team use.
-Each tool is a fully independent package with no shared code or cross-dependencies.
-The easiest way to use them is [zippy](tools/zippy/), a local web UI
-that wraps all three CLIs in one page; each CLI is also documented below for
-direct/scripted use.
+A monorepo of standalone command-line tools for internal team use, plus a
+local web UI so you don't have to touch the command line at all.
 
 </div>
 
-## Tools
+## Quick start
 
-| Tool | Command | Description |
-|------|---------|-------------|
-| [zippy](tools/zippy/) | `zippy` | Local web UI wrapping vidopt, imgopt, and fontslice in one tabbed page |
-| [vidopt](tools/vidopt/) | `vidopt` | Re-encode MP4/MOV videos to streaming-ready H.264/H.265 MP4 |
-| [fontslice](tools/fontslice/) | `fontslice` | Subset variable/static fonts and export optimized woff2 files |
-| [imgopt](tools/imgopt/) | `imgopt` | Compress JPEG/PNG/WebP images, resize, and convert to WebP or JPEG |
-
----
-
-## zippy
-
-A local web UI wrapping `vidopt`, `imgopt`, and `fontslice` behind a single
-tabbed page (Images / Videos / Fonts), for people who'd rather not use the
-command line. Runs a FastAPI server bound to `127.0.0.1` only; jobs work with
-file/folder paths you browse to (native picker), not uploads, so source files
-are never modified, same guarantee as the CLIs.
-
-**Key options**
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--port PORT` | `8765` | Port to bind to |
-| `--no-open` | off | Don't automatically open a browser tab on start |
-| `--window` | off | Open in a native desktop window instead of the browser (needs the `[window]` extra) |
-
-**Examples**
+Most people just want the UI. This installs it and everything it wraps:
 
 ```sh
+uv tool install ./tools/zippy
 zippy
-zippy --no-open
-zippy --port 9000
-zippy --window
 ```
 
-See [tools/zippy/README.md](tools/zippy/README.md) for full usage and
-install notes; it's installed differently from the other three tools (see
-below).
+A browser tab opens at `http://127.0.0.1:8765` with tabs for Images, Videos,
+and Fonts. Pick a file or folder, click optimize, done. Nothing you select is
+ever modified in place, outputs land in a new `optimized/` folder next to
+the source.
 
----
+Don't have `uv` yet? See [Step 1](#step-1-python-310-or-later) below.
 
-## vidopt
+Prefer scripting things from a terminal instead? Each tool also ships as its
+own CLI, see [Tools](#tools) for the full list.
 
-Encodes MP4/MOV source files to web-ready H.264 (or H.265) MP4 using ffmpeg.
-Source files are never modified. Outputs land in an `optimized/` subfolder by default.
+## Installing
 
-**Key options**
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--quality 1-5` | `4` | Output quality — 1 = smallest file, 5 = best quality |
-| `--speed fast\|balanced\|slow\|thorough` | `slow` | Encoding speed — slower = better compression |
-| `--h265` | off | Encode with H.265/HEVC (smaller files, modern browsers only) |
-| `--max-width PX` | — | Scale down if wider than PX, preserving aspect ratio |
-| `--recursive` / `-r` | off | Include subfolders when input is a directory |
-| `--overwrite` | off | Replace existing output files |
-| `--dry-run` | off | Print ffmpeg commands without running them |
-
-**Examples**
-
-```sh
-vidopt video.mp4
-vidopt clip.mov --output ./exports
-vidopt ./raw-footage --recursive
-vidopt video.mp4 --quality 5           # best quality
-vidopt video.mp4 --quality 2           # smallest file
-vidopt video.mp4 --h265 --quality 4
-vidopt video.mp4 --speed thorough      # best compression, slower encode
-vidopt video.mp4 --max-width 1280
-vidopt ./raw-footage --dry-run
-vidopt ./raw-footage --recursive --overwrite
-```
-
----
-
-## fontslice
-
-Subsets `.ttf`, `.otf`, and `.woff2` font files and exports optimized `.woff2` files.
-Reads weight ranges from `$fonts` in `_config.scss` when available; falls back to
-font file axes. Skips icomoon and Font Awesome fonts automatically.
-
-**Key options**
-
-| Flag | Description |
-|------|-------------|
-| `--dir PATH` | Project root to scan for `fonts/` and `_config.scss` |
-| `--fonts-dir PATH` | Path to fonts folder (auto-detected if omitted) |
-| `--config PATH` | Path to `_config.scss` (auto-detected if omitted) |
-| `--subsets` | Comma-separated subset names — skips the interactive prompt |
-| `--weights [FONT:]SPEC` | Weight override, repeatable. `400`, `400,700`, `400-700`. Prefix with `FontName:` to target one font. |
-| `--text-file PATH` | Path to a text file; subsets each font to exactly those characters. Overrides `--subsets`. Recommended for CJK fonts. |
-
-Valid subsets: `latin`, `latin-ext`, `vietnamese`, `cyrillic`, `cyrillic-ext`, `greek`, `greek-ext`, `chinese-simplified`, `chinese-traditional`, `korean`, `japanese`, `all`
-
-**Examples**
-
-```sh
-fontslice
-fontslice --dir ./my-theme
-fontslice --subsets latin,latin-ext
-```
-
----
-
-## imgopt
-
-Compresses JPEG, PNG, WebP, GIF, BMP, and TIFF images using Pillow.
-Source files are never modified. Outputs land in an `optimized/` subfolder by default.
-EXIF metadata is stripped by default.
-
-**Key options**
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--quality 1-5` | `4` | Output quality — 1 = smallest file, 5 = best quality |
-| `--webp` | off | Convert all outputs to WebP |
-| `--jpg` | off | Convert all outputs to JPEG (lossy, drops transparency) |
-| `--max-width PX` | — | Scale down if wider than PX, preserving aspect ratio |
-| `--max-height PX` | — | Scale down if taller than PX, preserving aspect ratio |
-| `--keep-exif` | off | Preserve EXIF metadata instead of stripping it |
-| `--recursive` / `-r` | off | Include subfolders when input is a directory |
-| `--overwrite` | off | Replace existing output files |
-| `--dry-run` | off | Print what would be done without writing files |
-
-**Examples**
-
-```sh
-imgopt photo.jpg
-imgopt banner.png --output ./exports
-imgopt ./raw-images --recursive
-imgopt photo.jpg --quality 5           # best quality
-imgopt photo.jpg --quality 2           # smallest file
-imgopt photo.jpg --webp                # convert to WebP
-imgopt photo.png --jpg                 # convert to JPEG
-imgopt photo.jpg --max-width 1920
-imgopt photo.jpg --max-width 1920 --max-height 1080
-imgopt ./raw-images --dry-run
-imgopt ./raw-images --recursive --overwrite
-```
-
----
-
-## Installing a tool
-
-### Step 1 — Python 3.10 or later
+### Step 1: Python 3.10 or later
 
 ```sh
 python --version
@@ -170,7 +43,7 @@ If missing or older than 3.10, install from [python.org/downloads](https://www.p
 
 > **Windows tip:** Check "Add Python to PATH" in the installer before clicking Install Now.
 
-### Step 2 — install uv or pipx
+### Step 2: install uv or pipx
 
 Both runners install each CLI into its own isolated environment. Pick one.
 
@@ -197,16 +70,16 @@ pipx ensurepath
 
 Verify: `pipx --version`
 
-### Step 3 — install
+### Step 3: install the tool(s) you want
 
-From the repo root, to get the UI (recommended, uv only, bundles the other
-three tools automatically):
+To get the UI (recommended, uv only, bundles the other three tools
+automatically):
 
 ```sh
 uv tool install ./tools/zippy
 ```
 
-Or install the CLIs individually:
+Or install individual CLIs, without the UI:
 
 ```sh
 # uv
@@ -220,12 +93,12 @@ pipx install ./tools/fontslice
 pipx install ./tools/imgopt
 ```
 
-zippy depends on the other three tools as local path dependencies, which
-pipx doesn't resolve the same way `uv` does, so install it with `uv` only.
+> zippy depends on the other three tools as local path dependencies, which
+> pipx doesn't resolve the same way `uv` does, so install zippy with `uv` only.
 
-Run `<command> --help` to verify.
+Run `<command> --help` (or `zippy --help`) to verify the install worked.
 
-## Updating a tool
+### Updating
 
 Pull the latest code, then reinstall:
 
@@ -242,7 +115,135 @@ pipx install --force ./tools/fontslice
 pipx install --force ./tools/imgopt
 ```
 
-## Adding a new tool
+---
+
+## Tools
+
+| Tool | Command | Description |
+|------|---------|-------------|
+| [zippy](tools/zippy/) | `zippy` | Local web UI wrapping vidopt, imgopt, and fontslice in one tabbed page |
+| [vidopt](tools/vidopt/) | `vidopt` | Re-encode MP4/MOV videos to streaming-ready H.264/H.265 MP4 |
+| [fontslice](tools/fontslice/) | `fontslice` | Subset variable/static fonts and export optimized woff2 files |
+| [imgopt](tools/imgopt/) | `imgopt` | Compress JPEG/PNG/WebP images, resize, and convert to WebP or JPEG |
+
+Each tool is a fully independent package with no shared code or
+cross-dependencies. `zippy` is the easiest way to use them all; the sections
+below cover the CLI for anyone who wants to script things or run them from a
+terminal instead.
+
+---
+
+## zippy (web UI)
+
+Wraps `vidopt`, `imgopt`, and `fontslice` behind a single tabbed page
+(Images / Videos / Fonts), for people who'd rather not use the command line.
+Runs a local server bound to `127.0.0.1` only (nothing leaves your machine);
+jobs work with file/folder paths you browse to (native picker), not uploads,
+so source files are never modified, same guarantee as the CLIs.
+
+```sh
+zippy                # opens the UI in your browser
+zippy --no-open       # start without opening a browser tab
+zippy --port 9000     # use a different port
+zippy --window        # open in a native desktop window instead of the browser
+```
+
+See [tools/zippy/README.md](tools/zippy/README.md) for more.
+
+---
+
+## vidopt (video CLI)
+
+Encodes MP4/MOV source files to web-ready H.264 (or H.265) MP4 using ffmpeg.
+Outputs land in an `optimized/` subfolder by default; source files are never
+modified.
+
+```sh
+vidopt video.mp4
+vidopt clip.mov --output ./exports
+vidopt ./raw-footage --recursive
+vidopt video.mp4 --quality 5           # best quality
+vidopt video.mp4 --quality 2           # smallest file
+vidopt video.mp4 --h265 --quality 4
+vidopt video.mp4 --speed thorough      # best compression, slower encode
+vidopt video.mp4 --max-width 1280
+vidopt ./raw-footage --dry-run
+vidopt ./raw-footage --recursive --overwrite
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--quality 1-5` | `4` | Output quality: 1 = smallest file, 5 = best quality |
+| `--speed fast\|balanced\|slow\|thorough` | `slow` | Encoding speed: slower means better compression |
+| `--h265` | off | Encode with H.265/HEVC (smaller files, modern browsers only) |
+| `--max-width PX` | (none) | Scale down if wider than PX, preserving aspect ratio |
+| `--recursive` / `-r` | off | Include subfolders when input is a directory |
+| `--overwrite` | off | Replace existing output files |
+| `--dry-run` | off | Print ffmpeg commands without running them |
+
+---
+
+## fontslice (font CLI)
+
+Subsets `.ttf`, `.otf`, and `.woff2` font files and exports optimized
+`.woff2` files. Reads weight ranges from `$fonts` in `_config.scss` when
+available; falls back to font file axes. Skips icomoon and Font Awesome
+fonts automatically.
+
+```sh
+fontslice
+fontslice --dir ./my-theme
+fontslice --subsets latin,latin-ext
+```
+
+| Flag | Description |
+|------|-------------|
+| `--dir PATH` | Project root to scan for `fonts/` and `_config.scss` |
+| `--fonts-dir PATH` | Path to fonts folder (auto-detected if omitted) |
+| `--config PATH` | Path to `_config.scss` (auto-detected if omitted) |
+| `--subsets` | Comma-separated subset names, skips the interactive prompt |
+| `--weights [FONT:]SPEC` | Weight override, repeatable. `400`, `400,700`, `400-700`. Prefix with `FontName:` to target one font. |
+| `--text-file PATH` | Path to a text file; subsets each font to exactly those characters. Overrides `--subsets`. Recommended for CJK fonts. |
+
+Valid subsets: `latin`, `latin-ext`, `vietnamese`, `cyrillic`, `cyrillic-ext`, `greek`, `greek-ext`, `chinese-simplified`, `chinese-traditional`, `korean`, `japanese`, `all`
+
+---
+
+## imgopt (image CLI)
+
+Compresses JPEG, PNG, WebP, GIF, BMP, and TIFF images using Pillow. Outputs
+land in an `optimized/` subfolder by default; source files are never
+modified. EXIF metadata is stripped by default.
+
+```sh
+imgopt photo.jpg
+imgopt banner.png --output ./exports
+imgopt ./raw-images --recursive
+imgopt photo.jpg --quality 5           # best quality
+imgopt photo.jpg --quality 2           # smallest file
+imgopt photo.jpg --webp                # convert to WebP
+imgopt photo.png --jpg                 # convert to JPEG
+imgopt photo.jpg --max-width 1920
+imgopt photo.jpg --max-width 1920 --max-height 1080
+imgopt ./raw-images --dry-run
+imgopt ./raw-images --recursive --overwrite
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--quality 1-5` | `4` | Output quality: 1 = smallest file, 5 = best quality |
+| `--webp` | off | Convert all outputs to WebP |
+| `--jpg` | off | Convert all outputs to JPEG (lossy, drops transparency) |
+| `--max-width PX` | (none) | Scale down if wider than PX, preserving aspect ratio |
+| `--max-height PX` | (none) | Scale down if taller than PX, preserving aspect ratio |
+| `--keep-exif` | off | Preserve EXIF metadata instead of stripping it |
+| `--recursive` / `-r` | off | Include subfolders when input is a directory |
+| `--overwrite` | off | Replace existing output files |
+| `--dry-run` | off | Print what would be done without writing files |
+
+---
+
+## Contributing a new tool
 
 1. Copy an existing tool folder as a template:
    ```sh
@@ -252,5 +253,5 @@ pipx install --force ./tools/imgopt
 3. Edit `tools/my-tool/pyproject.toml`: update `name`, `version`, `description`,
    the `[project.scripts]` entry, and the `[tool.hatch.build]` source path.
 4. Write your CLI logic in `src/my_tool/cli.py`.
-5. Add a row to the Tools table and a section above.
+5. Add a row to the [Tools](#tools) table and a usage section above.
 6. Install and verify: `uv tool install ./tools/my-tool && my-tool --help`
