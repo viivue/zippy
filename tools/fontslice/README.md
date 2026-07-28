@@ -178,8 +178,38 @@ Use `--subsets all` to include every defined subset in one pass.
 4. **Weights** *(no config only)*: if no `_config.scss` and no `--weights` flag is given, prompts to confirm or override the auto-detected weight range per font.
 5. **Ask**: prompts for character subsets (or uses `--subsets` / `--text-file`).
 6. **Build**: for each font, instances variable axes to the resolved weight range/pins, then subsets and converts to `woff2` via `fontTools`.
-7. **Summary**: prints a size comparison table and total bytes saved.
-8. **CSS**: prints ready-to-paste `@font-face` rules using the font's actual family name and resolved weight.
+7. **Metrics check**: after each `.woff2`/`.ttf` is written, its actual glyph ink is measured and its `hhea`/`OS2` ascent and descent are widened (never shrunk) to cover it, if needed. See [Ascent/descent metrics fix](#ascentdescent-metrics-fix) below.
+8. **Summary**: prints a size comparison table and total bytes saved.
+9. **CSS**: prints ready-to-paste `@font-face` rules using the font's actual family name and resolved weight.
+
+## Ascent/descent metrics fix
+
+Chromium sizes a native single-line `<input>`'s text box from the font's own
+declared `hhea`/`OS2` ascent and descent metrics and ignores CSS
+`line-height` for that element (Firefox doesn't have this problem, and
+`<textarea>`/body text aren't affected since they don't clip overflowing
+ink). If a font's declared ascent is shorter than its tallest glyph ink —
+common with stacked Vietnamese double-diacritic uppercase like `Ằ`, `Ẫ`,
+`Ổ` — that ink gets clipped in `<input>` fields even though it renders fine
+everywhere else.
+
+fontslice checks this automatically for every font it builds: after
+subsetting, it measures the actual ink bounds of the glyphs that made it
+into the output and widens `hhea.ascender`/`descender` and
+`OS/2.sTypoAscender`/`sTypoDescender`/`usWinAscent`/`usWinDescent` just
+enough to cover them (metadata only — glyph outlines are untouched, and
+metrics are only ever widened, never shrunk). When it patches a font it
+prints the before/after values, e.g.:
+
+```
+  Widened ascent/descent to fit glyph ink (1180/-320 of 1000 upm):
+    hhea.ascender 776 -> 1200
+    OS/2.sTypoAscender 776 -> 1200
+    OS/2.usWinAscent 932 -> 1200
+```
+
+No output means the source font's metrics already covered its ink and
+nothing needed patching.
 
 ## Output
 

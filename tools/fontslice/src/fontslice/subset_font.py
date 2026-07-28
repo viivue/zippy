@@ -70,6 +70,76 @@ def _run(cmd: list[str]) -> None:
         ) from e
 
 
+def _glyph_ink_extremes(font) -> tuple[int, int]:
+    """Return (max yMax, min yMin) ink bounds across every glyph in the font."""
+    from fontTools.pens.boundsPen import ControlBoundsPen
+
+    glyph_set = font.getGlyphSet()
+    y_max = 0
+    y_min = 0
+    for name in glyph_set.keys():
+        pen = ControlBoundsPen(glyph_set)
+        glyph_set[name].draw(pen)
+        if pen.bounds is None:
+            continue
+        _, gy_min, _, gy_max = pen.bounds
+        y_max = max(y_max, gy_max)
+        y_min = min(y_min, gy_min)
+    return y_max, y_min
+
+
+def fix_ink_metrics(path: str, margin: int = 20) -> bool:
+    """Widen hhea/OS2 ascent+descent to cover the font's actual glyph ink.
+
+    Chromium sizes a native form control (e.g. `<input>`) from the font's own
+    declared ascent/descent and ignores CSS line-height for it, so a subset
+    whose declared metrics are shorter than its tallest/lowest glyph ink
+    (e.g. Vietnamese double-diacritic uppercase like U+1EB2 ) gets its ink
+    clipped there even though textarea/body text look fine. Only ever widens
+    metrics (never shrinks) and touches metadata, not glyph outlines.
+    Returns True if metrics were patched.
+    """
+    from fontTools.ttLib import TTFont
+
+    font = TTFont(path)
+    try:
+        ink_max, ink_min = _glyph_ink_extremes(font)
+        need_ascent  = max(0, ink_max) + margin
+        need_descent = max(0, -ink_min) + margin  # positive magnitude below baseline
+
+        hhea = font["hhea"]
+        os2  = font["OS/2"]
+
+        changed = []
+        if hhea.ascender < need_ascent:
+            changed.append(f"hhea.ascender {hhea.ascender} -> {need_ascent}")
+            hhea.ascender = need_ascent
+        if -hhea.descender < need_descent:
+            changed.append(f"hhea.descender {hhea.descender} -> {-need_descent}")
+            hhea.descender = -need_descent
+        if os2.sTypoAscender < need_ascent:
+            changed.append(f"OS/2.sTypoAscender {os2.sTypoAscender} -> {need_ascent}")
+            os2.sTypoAscender = need_ascent
+        if -os2.sTypoDescender < need_descent:
+            changed.append(f"OS/2.sTypoDescender {os2.sTypoDescender} -> {-need_descent}")
+            os2.sTypoDescender = -need_descent
+        if os2.usWinAscent < need_ascent:
+            changed.append(f"OS/2.usWinAscent {os2.usWinAscent} -> {need_ascent}")
+            os2.usWinAscent = need_ascent
+        if os2.usWinDescent < need_descent:
+            changed.append(f"OS/2.usWinDescent {os2.usWinDescent} -> {need_descent}")
+            os2.usWinDescent = need_descent
+
+        if changed:
+            print(f"  Widened ascent/descent to fit glyph ink ({ink_max}/{ink_min} of {font['head'].unitsPerEm} upm):")
+            for line in changed:
+                print(f"    {line}")
+            font.save(path)
+        return bool(changed)
+    finally:
+        font.close()
+
+
 def _font_axes(path: str) -> dict[str, float]:
     from fontTools.ttLib import TTFont
     f = TTFont(path, lazy=True)
@@ -170,6 +240,10 @@ def process_font(
             f"--output-file={out}",
             f"--layout-features={features}",
         ] + extra)
+        try:
+            fix_ink_metrics(out)
+        except Exception as exc:
+            print(f"  Warning: could not verify glyph ink metrics: {exc}", file=sys.stderr)
         results[fmt] = os.path.getsize(out)
 
     print("\nSizes:")
