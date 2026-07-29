@@ -27,6 +27,6 @@ zippy = "zippy.cli:main"
 packages = ["src/zippy"]
 
 [tool.uv.sources]
-vidopt = { path = "../vidopt" }
-imgopt = { path = "../imgopt" }
-fontslice = { path = "../fontslice" }
+vidopt = { workspace = true }
+imgopt = { workspace = true }
+fontslice = { workspace = true }

@@ -14,6 +14,14 @@ required.
 
 ## Quick start
 
+From the repo root, no install needed:
+
+```sh
+uv run zippy
+```
+
+Or install it as a standalone command:
+
 ```sh
 uv tool install ./tools/zippy
 zippy
