@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fontslice"
-version = "0.1.0"
+version = "0.1.1"
 description = "Subset and convert variable/static fonts to optimized woff2 files."
 requires-python = ">=3.10"
 dependencies = [
