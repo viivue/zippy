@@ -9,6 +9,7 @@ unless --output is given. EXIF metadata is stripped by default.
 from __future__ import annotations
 
 import argparse
+import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,6 +26,18 @@ DEFAULT_QUALITY = 4
 # PNG compression: 0 (none) – 9 (max). Higher = smaller but slower.
 PNG_COMPRESS_MAP: dict[int, int] = {5: 6, 4: 7, 3: 8, 2: 9, 1: 9}
 
+# oxipng effort: 1 (fast) – 6 (exhaustive). Pillow is a PNG *writer*, not an
+# optimiser, so re-encoded PNGs are often bigger than a source that a real
+# optimiser already touched. Running oxipng on our output recovers that.
+OXIPNG_LEVEL_MAP: dict[int, int] = {5: 2, 4: 3, 3: 4, 2: 6, 1: 6}
+
+# Extension -> the format we'd write when no conversion is requested. Used to
+# decide whether a "larger than source" result is a same-format regression
+# (which we undo) or an intentional format change (which we keep).
+SAME_FORMAT: dict[str, str] = {
+    ".jpg": "JPEG", ".jpeg": "JPEG", ".png": "PNG", ".webp": "WEBP", ".gif": "GIF",
+}
+
 
 # ── Data structures ───────────────────────────────────────────────────────────
 
@@ -34,8 +47,29 @@ class FileResult:
     output: Path | None
     input_size: int
     output_size: int
-    status: str   # OK | LARGER | SKIPPED | FAILED | DRY-RUN
+    status: str   # OK | LARGER | COPIED | SKIPPED | FAILED | DRY-RUN
     error: str = ""
+
+
+# ── PNG post-processing ───────────────────────────────────────────────────────
+
+def _run_oxipng(path: Path, quality: int) -> None:
+    """Losslessly shrink a PNG in place with oxipng, if it is installed.
+
+    A no-op when the file is already optimal or oxipng is missing; never raises.
+    """
+    try:
+        import oxipng  # type: ignore[import]
+    except ImportError:
+        return
+    try:
+        oxipng.optimize(
+            str(path),
+            level=OXIPNG_LEVEL_MAP.get(quality, 3),
+            strip=oxipng.StripChunks.safe(),
+        )
+    except Exception:
+        pass
 
 
 # ── Core processing ───────────────────────────────────────────────────────────
@@ -124,14 +158,21 @@ def optimize_file(
         if max_height and new_h > max_height:
             new_w = round(new_w * max_height / new_h)
             new_h = max_height
-        if (new_w, new_h) != (w, h):
+        resized = (new_w, new_h) != (w, h)
+        if resized:
             img = img.resize((new_w, new_h), Image.LANCZOS)
 
         # Build save kwargs.
         save_kwargs: dict = {}
 
         if out_fmt == "JPEG":
-            if img.mode in ("RGBA", "P", "LA"):
+            if img.mode in ("RGBA", "P", "LA") or "transparency" in img.info:
+                if ext == ".png":
+                    print(
+                        f"  WARN: {source.name} is a PNG with transparency or a "
+                        f"palette — as JPEG it usually grows a lot and loses the "
+                        f"alpha channel. Try --webp instead."
+                    )
                 img = img.convert("RGB")
             save_kwargs["quality"]   = QUALITY_MAP[quality]
             save_kwargs["optimize"]  = True
@@ -144,8 +185,21 @@ def optimize_file(
             save_kwargs["optimize"]       = True
 
         elif out_fmt == "WEBP":
-            save_kwargs["quality"] = QUALITY_MAP[quality]
-            save_kwargs["method"]  = 6  # best compression ratio
+            # Graphics (PNG/GIF/BMP sources, or anything with an alpha channel)
+            # are full of hard edges that lossy WebP encodes very badly — often
+            # many times the size of the source. Use lossless WebP for those and
+            # keep lossy WebP for photographic (JPEG/opaque) input.
+            is_graphic = (
+                ext in (".png", ".gif", ".bmp")
+                or img.mode in ("P", "LA", "RGBA")
+                or "transparency" in img.info
+            )
+            if is_graphic:
+                save_kwargs["lossless"] = True
+                save_kwargs["quality"]  = 100  # for lossless: effort, not fidelity
+            else:
+                save_kwargs["quality"] = QUALITY_MAP[quality]
+            save_kwargs["method"] = 6  # best compression ratio
             if strip_exif:
                 save_kwargs["exif"] = b""
 
@@ -153,6 +207,9 @@ def optimize_file(
             pass  # Pillow re-saves GIFs; no meaningful quality knob
 
         img.save(output_path, format=out_fmt, **save_kwargs)
+
+        if out_fmt == "PNG":
+            _run_oxipng(output_path, quality)
 
     except Exception as exc:
         return FileResult(
@@ -162,7 +219,20 @@ def optimize_file(
         )
 
     output_size = output_path.stat().st_size
-    is_larger   = output_size > input_size
+
+    # A re-encode that ended up larger, in the same format and at the same
+    # dimensions, is a regression — the source was already well optimised.
+    # Keep the smaller original rather than shipping a worse file.
+    same_format = SAME_FORMAT.get(ext) == out_fmt
+    if output_size >= input_size and same_format and not resized:
+        shutil.copyfile(source, output_path)
+        return FileResult(
+            source=source, output=output_path,
+            input_size=input_size, output_size=input_size,
+            status="COPIED",
+        )
+
+    is_larger = output_size > input_size
     if is_larger:
         print(
             f"  NOTE: {source.name} output is larger "
@@ -236,6 +306,8 @@ def print_report(results: list[FileResult]) -> int:
             new_s, saved_s = "-", "-"
         elif r.status == "SKIPPED":
             new_s, saved_s = _fmt_bytes(r.output_size), "-"
+        elif r.status == "COPIED":
+            new_s, saved_s = _fmt_bytes(r.output_size), "kept"
         else:
             new_s  = _fmt_bytes(r.output_size)
             saved  = r.input_size - r.output_size

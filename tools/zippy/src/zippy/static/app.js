@@ -12,6 +12,7 @@ function fmtBytes(n) {
 function statusTag(status) {
   const map = {
     OK: "tag-ok",
+    COPIED: "tag-ok",
     LARGER: "tag-warn",
     FAILED: "tag-accent",
     SKIPPED: "tag-neutral",

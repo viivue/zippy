@@ -128,7 +128,10 @@ imgopt ./raw-images --recursive --overwrite
 | `1` | 45 | 9 |
 
 JPEG and WebP quality is lossy (higher = better).
-PNG compression is lossless, only file size changes, not visual quality.
+PNG compression is lossless, only file size changes, not visual quality. After
+Pillow writes a PNG, [oxipng](https://github.com/oxipng/oxipng) re-compresses it
+losslessly; the `--quality` value picks the oxipng effort level (higher quality =
+faster/lighter, lower quality = exhaustive).
 
 ## Format conversion (`--webp` / `--jpg`)
 
@@ -137,7 +140,9 @@ are converted to PNG). Use `--webp` or `--jpg` to convert everything to a single
 format. The two flags are mutually exclusive.
 
 **`--webp`**: WebP typically produces smaller files than JPEG or PNG at equivalent
-visual quality and is supported by all modern browsers.
+visual quality and is supported by all modern browsers. Graphics (PNG/GIF/BMP
+sources, or any image with transparency) are written as **lossless** WebP so hard
+edges stay crisp; photographic input stays lossy at the `--quality` setting.
 
 **`--jpg`**: converts to JPEG. Images with transparency (e.g. PNG with alpha) have
 their transparent areas dropped (filled with black) because JPEG does not support
@@ -164,14 +169,20 @@ File                                   Original     Output   Saved  Status
 --------------------------------------------------------------------------------
 hero.jpg                                 2.4 MB    480.1 KB  80.6%  OK
 banner.png                             512.0 KB    198.3 KB  61.3%  OK
+grid-bg.png                            217.6 KB    217.6 KB    kept  COPIED
 icon.gif                                12.0 KB     14.2 KB  -18.3%  LARGER  <<<
 --------------------------------------------------------------------------------
 Net saved: 2.23 MB
 ```
 
-Files marked `LARGER` are kept but flagged. This can happen when the source is
-already well-compressed or when the format has limited compression headroom (e.g.
-small GIFs or highly optimized PNGs).
+Files marked `COPIED` re-encoded larger than the source in the same format, so
+the original was copied through unchanged. This happens when the source is
+already optimally compressed (many design-tool PNG exports already are).
+
+Files marked `LARGER` are kept but flagged. Since same-format regressions are
+copied through, this now only shows up on format conversions (`--jpg` / `--webp`)
+where the target format is a poor fit for the image, e.g. converting a flat,
+few-colour graphic to JPEG.
 
 Files marked `SKIPPED` already have an output in place, pass `--overwrite` to
 re-process them.
