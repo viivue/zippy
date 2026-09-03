@@ -24,7 +24,7 @@ def _file_result_to_dict(result: Any) -> dict[str, Any]:
     input_size = result.input_size
     output_size = result.output_size
     saved_pct = None
-    if result.status in ("OK", "LARGER") and input_size:
+    if result.status in ("OK", "LARGER", "COPIED") and input_size:
         saved_pct = round((input_size - output_size) * 100 / input_size, 1)
     return {
         "file": result.source.name,
@@ -379,7 +379,7 @@ def run_imgopt_job(job: Job, params: dict[str, Any]) -> None:
 
         if result.status == "FAILED":
             failures += 1
-        elif result.status in ("OK", "LARGER"):
+        elif result.status in ("OK", "LARGER", "COPIED"):
             net_saved += result.input_size - result.output_size
 
         job.add_result(_file_result_to_dict(result))
