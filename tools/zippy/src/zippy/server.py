@@ -1,4 +1,4 @@
-"""FastAPI app: static UI, native file picker, and job APIs for vidopt/imgopt/fontslice."""
+"""FastAPI app: static UI, native file picker, and job APIs for imgopt/imgresize/vidopt/fontslice."""
 
 from __future__ import annotations
 
@@ -11,13 +11,19 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from imgopt.cli import DEFAULT_QUALITY as IMG_DEFAULT_QUALITY
+from imgresize.cli import DEFAULT_QUALITY as RESIZE_DEFAULT_QUALITY
 from pydantic import BaseModel, Field
 from vidopt.cli import DEFAULT_QUALITY as VID_DEFAULT_QUALITY
 from vidopt.cli import DEFAULT_SPEED as VID_DEFAULT_SPEED
 
 from . import browse as browse_mod
 from .jobs import Job, JobRegistry
-from .runners import run_fontslice_job, run_imgopt_job, run_vidopt_job
+from .runners import (
+    run_fontslice_job,
+    run_imgopt_job,
+    run_imgresize_job,
+    run_vidopt_job,
+)
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -95,6 +101,37 @@ class ImgoptJobRequest(BaseModel):
 @app.post("/api/imgopt/jobs")
 def api_imgopt_job(body: ImgoptJobRequest) -> dict:
     job = registry.create("imgopt", lambda j: run_imgopt_job(j, body.model_dump()))
+    return {"job_id": job.id}
+
+
+# ── imgresize ─────────────────────────────────────────────────────────────────
+
+
+class ImgresizeJobRequest(BaseModel):
+    input: str | list[str]
+    output: str | None = None
+    mode: Literal["fit", "cover"] = "fit"
+    width: int | None = None
+    height: int | None = None
+    aspect_ratio: str | None = None
+    position: Literal[
+        "center", "top", "bottom", "left", "right",
+        "top-left", "top-right", "bottom-left", "bottom-right",
+    ] = "center"
+    allow_upscale: bool = False
+    quality: int = Field(default=RESIZE_DEFAULT_QUALITY, ge=1, le=5)
+    format: Literal["original", "webp", "jpg"] = "original"
+    keep_exif: bool = False
+    recursive: bool = False
+    overwrite: bool = False
+    dry_run: bool = False
+
+
+@app.post("/api/imgresize/jobs")
+def api_imgresize_job(body: ImgresizeJobRequest) -> dict:
+    job = registry.create(
+        "imgresize", lambda j: run_imgresize_job(j, body.model_dump())
+    )
     return {"job_id": job.id}
 
 

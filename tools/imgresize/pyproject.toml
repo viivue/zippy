@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "imgresize"
+version = "0.1.1"
+description = "Resize and crop JPEG/PNG/WebP images to target dimensions using Pillow."
+requires-python = ">=3.10"
+dependencies = [
+    "Pillow>=10.0",
+    "pyoxipng>=9.0",
+]
+
+[project.scripts]
+imgresize = "imgresize.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/imgresize"]

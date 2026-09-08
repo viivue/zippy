@@ -27,6 +27,13 @@
           <span class="mono" style="font-size:10.5px;opacity:0.55;font-weight:400;">imgopt</span>
         </span>
       </button>
+      <button type="button" class="tab-btn" data-tab="resize" role="tab" aria-selected="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+        <span style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;line-height:1.1;">
+          <span>Resize</span>
+          <span class="mono" style="font-size:10.5px;opacity:0.55;font-weight:400;">imgresize</span>
+        </span>
+      </button>
       <button type="button" class="tab-btn" data-tab="videos" role="tab" aria-selected="false">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12"/></svg>
         <span style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;line-height:1.1;">
@@ -119,6 +126,116 @@
           <span class="mono" id="img-summary" style="font-size:13px;opacity:0.7;"></span>
           <button type="button" class="btn btn-primary" id="img-run">
             <span class="btn-label">Optimize</span>
+            <svg class="btn-icon-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <svg class="btn-icon-spinner is-hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9" opacity="0.25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RESIZE TAB ============ -->
+    <section data-panel="resize" hidden style="display:flex;flex-direction:column;gap:28px;">
+
+      <div class="dropzone" id="resize-dropzone">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+        <div class="dropzone-title">Click to <span class="dropzone-link">browse</span> for one or more files</div>
+        <div class="mono dropzone-hint">.jpg &middot; .jpeg &middot; .png &middot; .webp &middot; .gif &middot; .bmp &middot; .tiff &mdash; source files are never modified</div>
+      </div>
+      <div class="path-line">Input: <strong class="mono" id="resize-input-path">not selected</strong></div>
+
+      <!-- options -->
+      <div class="card elev-sm" style="padding:24px;gap:20px;">
+        <div class="card-kicker">Options</div>
+
+        <div class="field">
+          <label>Mode</label>
+          <div class="seg" role="radiogroup" style="width:100%;max-width:420px;">
+            <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="resize-mode" value="fit" checked />Fit (keep ratio)</label>
+            <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="resize-mode" value="cover" />Cover (crop to fill)</label>
+          </div>
+          <div class="mono" style="font-size:12px;opacity:0.55;margin-top:6px;">Fit scales the whole image into the box. Cover fills the box and crops the overflow.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+          <div class="field"><label>Target width (px)</label><input class="input mono" type="number" id="resize-width" placeholder="e.g. 1600" /></div>
+          <div class="field"><label>Target height (px)</label><input class="input mono" type="number" id="resize-height" placeholder="e.g. 1600" /></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+          <div class="field">
+            <label>Aspect ratio (cover mode, optional)</label>
+            <input class="input mono" type="text" id="resize-aspect" placeholder="e.g. 16:9" />
+          </div>
+          <div class="field">
+            <label>Crop anchor (cover mode)</label>
+            <select class="input mono" id="resize-position">
+              <option value="center">center</option>
+              <option value="top">top</option>
+              <option value="bottom">bottom</option>
+              <option value="left">left</option>
+              <option value="right">right</option>
+              <option value="top-left">top-left</option>
+              <option value="top-right">top-right</option>
+              <option value="bottom-left">bottom-left</option>
+              <option value="bottom-right">bottom-right</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="checkbox-row"><input type="checkbox" id="resize-allow-upscale" /><span class="checkbox-box"></span>Allow upscaling past the source size</label>
+
+        <div class="hr" style="margin:0;"></div>
+
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:28px;">
+          <div class="field">
+            <label>Quality</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Smallest</span>
+              <input type="range" id="resize-quality" min="1" max="5" step="1" value="4" style="flex:1;accent-color:var(--color-accent);" />
+              <span class="mono" style="font-size:11px;opacity:0.55;white-space:nowrap;">Best quality</span>
+              <span class="mono" id="resize-quality-value" style="font-size:13px;font-weight:600;background:var(--color-accent-100);color:var(--color-accent-800);padding:2px 8px;min-width:18px;text-align:center;">4</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Output format</label>
+            <div class="seg" role="radiogroup" style="width:100%;">
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="resize-format" value="original" checked />Keep original</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="resize-format" value="webp" />WebP</label>
+              <label class="seg-opt" style="flex:1;justify-content:center;"><input type="radio" name="resize-format" value="jpg" />JPEG</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="hr" style="margin:0;"></div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px 28px;">
+          <label class="checkbox-row"><input type="checkbox" id="resize-keep-exif" /><span class="checkbox-box"></span>Keep EXIF metadata</label>
+          <label class="checkbox-row"><input type="checkbox" id="resize-overwrite" /><span class="checkbox-box"></span>Overwrite existing outputs</label>
+          <label class="checkbox-row"><input type="checkbox" id="resize-dry-run" /><span class="checkbox-box"></span>Dry run</label>
+        </div>
+
+        <div class="field" style="max-width:520px;">
+          <label>Output folder (optional)</label>
+          <div style="display:flex;gap:8px;">
+            <input class="input mono" type="text" id="resize-output" placeholder="<input>/resized" style="flex:1;" />
+            <button type="button" class="btn btn-secondary" id="resize-output-browse">Browse&hellip;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- results -->
+      <div class="card elev-sm" style="padding:24px;gap:16px;">
+        <div class="card-kicker">Results</div>
+        <table class="table">
+          <thead><tr><th>File</th><th>Original size</th><th>Output size</th><th>Dimensions</th><th>Saved %</th><th>Status</th></tr></thead>
+          <tbody id="resize-results-body">
+            <tr><td colspan="6" class="mono" style="opacity:0.5;">No results yet.</td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;">
+          <span class="mono" id="resize-summary" style="font-size:13px;opacity:0.7;"></span>
+          <button type="button" class="btn btn-primary" id="resize-run">
+            <span class="btn-label">Resize</span>
             <svg class="btn-icon-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             <svg class="btn-icon-spinner is-hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9" opacity="0.25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
           </button>

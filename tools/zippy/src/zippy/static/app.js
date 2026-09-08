@@ -98,11 +98,11 @@ function subscribeJob(jobId, { onUpdate, onDone }) {
   es.onerror = () => es.close();
 }
 
-function setButtonLoading(id, loading) {
+function setButtonLoading(id, loading, idleLabel = "Optimize", busyLabel = "Optimizing") {
   const btn = document.getElementById(id);
   btn.disabled = loading;
   btn.classList.toggle("is-loading", loading);
-  btn.querySelector(".btn-label").textContent = loading ? "Optimizing" : "Optimize";
+  btn.querySelector(".btn-label").textContent = loading ? busyLabel : idleLabel;
   // SVGElement.hidden doesn't reliably reflect to the content attribute in
   // every browser, so toggle visibility with a class instead of `.hidden`.
   btn.querySelector(".btn-icon-arrow").classList.toggle("is-hidden", loading);
@@ -225,6 +225,110 @@ function initImagesTab() {
   });
 
   document.getElementById("img-run").addEventListener("click", runImageJob);
+}
+
+// ── resize tab ────────────────────────────────────────────────────────────────
+
+let resizeInputPaths = [];
+let resizePastResults = []; // completed results from earlier runs this session, kept until refresh
+
+function renderResizeResults(results) {
+  const body = document.getElementById("resize-results-body");
+  if (!results.length) {
+    body.innerHTML = '<tr><td colspan="6" class="mono" style="opacity:0.5;">No results yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = results
+    .map(
+      (r) => `
+    <tr>
+      <td class="mono">${r.file}</td>
+      <td class="mono">${fmtBytes(r.input_size)}</td>
+      <td class="mono">${r.output_size != null ? fmtBytes(r.output_size) : "—"}</td>
+      <td class="mono">${r.resolution || "—"}</td>
+      <td class="mono">${r.saved_pct != null ? r.saved_pct + "%" : "—"}</td>
+      <td>${statusTag(r.status)}</td>
+    </tr>`
+    )
+    .join("");
+}
+
+async function runResizeJob() {
+  if (!resizeInputPaths.length) {
+    alert("Choose one or more input files first.");
+    return;
+  }
+  const mode = document.querySelector('input[name="resize-mode"]:checked').value;
+  const width = numOrNull("resize-width");
+  const height = numOrNull("resize-height");
+  const aspect = document.getElementById("resize-aspect").value.trim() || null;
+
+  if (mode === "fit" && !width && !height) {
+    alert("Fit mode needs a target width or height.");
+    return;
+  }
+  if (mode === "cover" && !((width && height) || aspect)) {
+    alert("Cover mode needs both width and height, or an aspect ratio.");
+    return;
+  }
+
+  const body = {
+    input: resizeInputPaths,
+    output: document.getElementById("resize-output").value || null,
+    mode,
+    width,
+    height,
+    aspect_ratio: aspect,
+    position: document.getElementById("resize-position").value,
+    allow_upscale: document.getElementById("resize-allow-upscale").checked,
+    quality: Number(document.getElementById("resize-quality").value),
+    format: document.querySelector('input[name="resize-format"]:checked').value,
+    keep_exif: document.getElementById("resize-keep-exif").checked,
+    overwrite: document.getElementById("resize-overwrite").checked,
+    dry_run: document.getElementById("resize-dry-run").checked,
+  };
+
+  setButtonLoading("resize-run", true, "Resize", "Resizing");
+  renderResizeResults(resizePastResults);
+  document.getElementById("resize-summary").textContent = "";
+
+  try {
+    const { job_id } = await postJSON("/api/imgresize/jobs", body);
+    subscribeJob(job_id, {
+      onUpdate: (payload) => {
+        renderResizeResults([...resizePastResults, ...payload.results]);
+      },
+      onDone: (payload) => {
+        setButtonLoading("resize-run", false, "Resize", "Resizing");
+        resizePastResults = [...resizePastResults, ...payload.results];
+        renderResizeResults(resizePastResults);
+        document.getElementById("resize-summary").textContent = summaryText(payload);
+      },
+    });
+  } catch (err) {
+    setButtonLoading("resize-run", false, "Resize", "Resizing");
+    alert(`Failed to start job: ${err.message}`);
+  }
+}
+
+function initResizeTab() {
+  initQualitySlider("resize-quality", "resize-quality-value");
+
+  document.getElementById("resize-dropzone").addEventListener("click", async () => {
+    const filetypes = [["Images", "*.jpg *.jpeg *.png *.webp *.gif *.bmp *.tiff *.tif"]];
+    const paths = await browseFiles(filetypes);
+    if (paths.length) {
+      resizeInputPaths = paths;
+      document.getElementById("resize-input-path").textContent = pathsSummary(paths);
+    }
+  });
+
+  document.getElementById("resize-output-browse").addEventListener("click", async () => {
+    const path = await browsePath("folder");
+    if (path) document.getElementById("resize-output").value = path;
+  });
+
+  document.getElementById("resize-run").addEventListener("click", runResizeJob);
 }
 
 // ── videos tab ────────────────────────────────────────────────────────────────
@@ -536,6 +640,7 @@ function initFontsTab() {
 document.addEventListener("DOMContentLoaded", () => {
   initTabs();
   initImagesTab();
+  initResizeTab();
   initVideosTab();
   initFontsTab();
 });
