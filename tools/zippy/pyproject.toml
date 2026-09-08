@@ -5,13 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "zippy"
 version = "0.1.1"
-description = "Local web UI wrapping vidopt, imgopt, and fontslice behind a FastAPI server."
+description = "Local web UI wrapping imgopt, imgresize, vidopt, and fontslice behind a FastAPI server."
 requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.110",
     "uvicorn>=0.27",
     "vidopt",
     "imgopt",
+    "imgresize",
     "fontslice",
 ]
 
@@ -29,4 +30,5 @@ packages = ["src/zippy"]
 [tool.uv.sources]
 vidopt = { workspace = true }
 imgopt = { workspace = true }
+imgresize = { workspace = true }
 fontslice = { workspace = true }

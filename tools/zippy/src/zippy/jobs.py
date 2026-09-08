@@ -21,7 +21,7 @@ JOB_STATUSES = ("queued", "running", "done", "failed")
 @dataclass
 class Job:
     id: str
-    kind: str  # "vidopt" | "imgopt" | "fontslice"
+    kind: str  # "vidopt" | "imgopt" | "imgresize" | "fontslice"
     status: str = "queued"
     progress: float = 0.0  # 0-100, overall job progress
     current_file: str | None = None

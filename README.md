@@ -27,10 +27,10 @@ uv tool install ./tools/zippy
 zippy
 ```
 
-A browser tab opens at `http://127.0.0.1:8765` with tabs for Images, Videos,
-and Fonts. Pick a file or folder, click optimize, done. Nothing you select is
-ever modified in place, outputs land in a new `optimized/` folder next to
-the source.
+A browser tab opens at `http://127.0.0.1:8765` with tabs for Images, Resize,
+Videos, and Fonts. Pick a file or folder, click the button, done. Nothing you
+select is ever modified in place, outputs land in a new folder next to the
+source.
 
 Don't have `uv` yet? See [Step 1](#step-1-python-310-or-later) below.
 
@@ -87,10 +87,11 @@ link below for that tool's install and usage instructions.
 
 | Tool | Command | Description |
 |------|---------|-------------|
-| [zippy](tools/zippy/) | `zippy` | Local web UI wrapping vidopt, imgopt, and fontslice in one tabbed page |
+| [zippy](tools/zippy/) | `zippy` | Local web UI wrapping imgopt, imgresize, vidopt, and fontslice in one tabbed page |
 | [vidopt](tools/vidopt/) | `vidopt` | Re-encode MP4/MOV videos to streaming-ready H.264/H.265 MP4 |
 | [fontslice](tools/fontslice/) | `fontslice` | Subset variable/static fonts and export optimized woff2 files |
 | [imgopt](tools/imgopt/) | `imgopt` | Compress JPEG/PNG/WebP images, resize, and convert to WebP or JPEG |
+| [imgresize](tools/imgresize/) | `imgresize` | Resize or crop images to target dimensions, fit-to-box or cover-and-crop |
 
 Each tool is a fully independent package with no shared code or
 cross-dependencies.

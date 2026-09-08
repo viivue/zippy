@@ -391,6 +391,122 @@ def run_imgopt_job(job: Job, params: dict[str, Any]) -> None:
         job.error = f"{failures} of {total} file(s) failed"
 
 
+# ── imgresize ─────────────────────────────────────────────────────────────────
+
+
+def run_imgresize_job(job: Job, params: dict[str, Any]) -> None:
+    from imgresize.cli import (
+        DEFAULT_QUALITY,
+        OUTPUT_SUBFOLDER,
+        FileResult,
+        gather_inputs,
+        parse_aspect_ratio,
+        resize_file,
+    )
+
+    mode = params.get("mode") or "fit"
+    width = params.get("width")
+    height = params.get("height")
+    raw_aspect = params.get("aspect_ratio")
+    aspect = parse_aspect_ratio(raw_aspect) if raw_aspect else None
+    position = params.get("position") or "center"
+    allow_upscale = bool(params.get("allow_upscale"))
+    quality = params.get("quality") or DEFAULT_QUALITY
+    fmt = params.get("format") or "original"
+    to_webp = fmt == "webp"
+    to_jpg = fmt == "jpg"
+    keep_exif = bool(params.get("keep_exif"))
+    recursive = bool(params.get("recursive"))
+    overwrite = bool(params.get("overwrite"))
+    dry_run = bool(params.get("dry_run"))
+
+    if mode == "fit" and not width and not height:
+        raise ValueError("fit mode needs a width or a height.")
+    if mode == "cover" and not ((width and height) or aspect):
+        raise ValueError("cover mode needs both width and height, or an aspect ratio.")
+
+    raw_input = params["input"]
+    if isinstance(raw_input, list):
+        input_path = None
+        files = [Path(p) for p in raw_input]
+    else:
+        input_path = Path(raw_input)
+        files = gather_inputs(input_path, recursive=recursive)
+    if not files:
+        job.set_summary(
+            {
+                "message": "No supported image files found.",
+                "net_saved": 0,
+                "failures": 0,
+                "total": 0,
+            }
+        )
+        return
+
+    explicit_output = Path(params["output"]) if params.get("output") else None
+    if input_path is not None and explicit_output is None:
+        base = input_path if input_path.is_dir() else input_path.parent
+        output_root = base / OUTPUT_SUBFOLDER
+    else:
+        output_root = explicit_output
+
+    total = len(files)
+    net_saved = 0
+    failures = 0
+
+    for idx, source_file in enumerate(files):
+        if output_root is None:
+            output_dir = source_file.parent / OUTPUT_SUBFOLDER
+        elif input_path is not None and input_path.is_dir() and recursive:
+            rel = source_file.parent.relative_to(input_path)
+            output_dir = output_root / rel
+        else:
+            output_dir = output_root
+
+        job.set_progress(idx / total * 100, current_file=source_file.name)
+
+        try:
+            result = resize_file(
+                source_file,
+                output_dir,
+                mode=mode,
+                width=width,
+                height=height,
+                aspect=aspect,
+                position=position,
+                allow_upscale=allow_upscale,
+                quality=quality,
+                to_webp=to_webp,
+                to_jpg=to_jpg,
+                strip_exif=not keep_exif,
+                overwrite=overwrite,
+                dry_run=dry_run,
+            )
+        except Exception as exc:
+            size = source_file.stat().st_size if source_file.exists() else 0
+            result = FileResult(
+                source=source_file,
+                output=None,
+                input_size=size,
+                output_size=0,
+                status="FAILED",
+                error=str(exc),
+            )
+
+        if result.status == "FAILED":
+            failures += 1
+        elif result.status in ("OK", "LARGER"):
+            net_saved += result.input_size - result.output_size
+
+        job.add_result(_file_result_to_dict(result))
+
+    job.set_progress(100.0, current_file=None)
+    job.set_summary({"net_saved": net_saved, "failures": failures, "total": total})
+    if failures:
+        job.status = "failed"
+        job.error = f"{failures} of {total} file(s) failed"
+
+
 # ── fontslice ─────────────────────────────────────────────────────────────────
 
 

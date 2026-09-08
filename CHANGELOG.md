@@ -1,8 +1,17 @@
 # Changelog
 
 All notable changes to the zippy workspace are documented here. Versions apply
-to all four packages (`fontslice`, `imgopt`, `vidopt`, `zippy`), which move in
-lockstep.
+to all five packages (`fontslice`, `imgopt`, `imgresize`, `vidopt`, `zippy`),
+which move in lockstep.
+
+## [Unreleased]
+
+### Added
+
+- **imgresize:** new tool to resize or crop images to target dimensions, in
+  `fit` mode (scale to a box, keep ratio) or `cover` mode (fill a box, keep
+  ratio, crop the overflow), with imgopt-style `--quality` and `--webp`/`--jpg`
+  options. Also available as a **Resize** tab in the `zippy` UI.
 
 ## [0.1.1] - 2026-09-03
 
