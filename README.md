@@ -105,7 +105,7 @@ source's license terms. Source files are never touched.
 
 | Tool | Kept | Removed |
 |------|------|---------|
-| imgopt | EXIF Artist and Copyright, XMP rights (`dc:rights`, `dc:creator`, `xmpRights:*`, `photoshop:Credit`), PNG Copyright/Author/Disclaimer text, non-sRGB colour profiles (Display P3, Adobe RGB) | Camera make/model, lens and exposure settings, GPS location, dates, thumbnails, software tags, comments, all other EXIF/XMP/PNG text, plain sRGB colour profiles (browsers assume sRGB) |
+| imgopt | EXIF Artist and Copyright; IPTC-IIM By-line, Credit, Source, Copyright Notice and Contact; XMP rights (`dc:rights`, `dc:creator`, `xmpRights:*`, PLUS `plus:*` license data, `photoshop:Credit`/`Source`, IPTC creator contact); the AI-generated marker (`Iptc4xmpExt:DigitalSourceType`); PNG Copyright/Author/Disclaimer text; comments that read like a copyright or license notice; non-sRGB colour profiles (Display P3, Adobe RGB) | Camera make/model, lens and exposure settings, GPS and XMP location, dates, thumbnails, software tags, IPTC keywords/captions/places, other comments, all other EXIF/IPTC/XMP/PNG text, plain sRGB colour profiles (browsers assume sRGB) |
 | fontslice | Every `name` table record: copyright, trademark, manufacturer, designer, description, vendor/designer URLs, license and license URL. Embedding permissions (`OS/2.fsType`) | Glyphs and OpenType features outside the chosen subset (that is the point of subsetting) |
 | vidopt | Container tags `copyright`, `artist`, `author`, `album_artist`, `composer`, `license` | GPS location, creation date, device make/model, encoder and handler tags, all other container and stream metadata. Rotation is baked into the pixels |
 

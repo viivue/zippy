@@ -194,13 +194,20 @@ re-process them.
 | Kept by default | Removed by default |
 |-----------------|--------------------|
 | EXIF Artist and Copyright | Camera make/model, lens and exposure settings |
-| XMP rights: `dc:rights`, `dc:creator`, `xmpRights:*`, `photoshop:Credit` | GPS location (EXIF and XMP) |
-| PNG `Copyright`, `Author`, `Disclaimer` text | Dates, thumbnails, software tags |
-| Non-sRGB colour profiles (Display P3, Adobe RGB) | Comments and all other EXIF/XMP/PNG text |
-| | Plain sRGB colour profiles (browsers assume sRGB) |
+| IPTC-IIM By-line, By-line Title, Credit, Source, Copyright Notice, Contact | GPS location, XMP location fields |
+| XMP rights: `dc:rights`, `dc:creator`, `xmpRights:*`, `plus:*` (PLUS license IDs, licensor), `photoshop:Credit`/`Source`, `Iptc4xmpCore:CreatorContactInfo` | Dates, thumbnails, software tags |
+| AI-generated marker: `Iptc4xmpExt:DigitalSourceType` | IPTC keywords, captions, places |
+| PNG `Copyright`, `Author`, `Disclaimer` text | Comments that are not a rights notice |
+| JPEG/GIF comments and PNG `Comment`/`Description` that read like a copyright or license notice | All other EXIF/IPTC/XMP/PNG text |
+| Non-sRGB colour profiles (Display P3, Adobe RGB) | Plain sRGB colour profiles (browsers assume sRGB) |
+
+IPTC-IIM can only be written to JPEG. When converting to WebP or PNG, its
+rights fields are copied into XMP instead, which keeps non-ASCII names and the
+`©` sign intact.
 
 `--keep-exif` keeps everything, including GPS and camera details. Keeping the
-rights fields adds about 0.5 KB per image.
+rights fields adds about 0.5 to 1 KB per image, and nothing for images without
+rights metadata.
 
 ## Development
 
