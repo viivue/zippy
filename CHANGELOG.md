@@ -13,6 +13,12 @@ lockstep.
   kept by default; other metadata is still stripped.
 - **imgopt:** `--keep-exif` ("Keep all metadata" in the UI) now actually keeps
   EXIF, XMP, PNG text and the ICC profile; it previously kept nothing.
+- **imgopt:** keep IPTC-IIM rights datasets (By-line, Credit, Source, Copyright
+  Notice, Contact), PLUS and IPTC licensing XMP, the AI-generated marker
+  (`DigitalSourceType`) and comments that read like a rights notice. IIM rights
+  are copied into XMP when converting to WebP or PNG.
+- **imgopt:** private JPEG and GIF comments are now stripped by default; Pillow
+  used to copy them through.
 - **fontslice:** keep every `name` table record, so trademark, manufacturer,
   designer, license and license URL survive subsetting.
 - **vidopt:** keep `copyright`, `artist`, `author`, `album_artist`, `composer`

@@ -10,7 +10,9 @@ copyright fields and non-sRGB colour profiles, which are always kept.
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
+import struct
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -45,23 +47,42 @@ RIGHTS_EXIF_TAGS = (0x013B, 0x8298)  # Artist, Copyright
 RIGHTS_PNG_KEYS = {"Author", "Copyright", "Disclaimer"}
 PNG_XMP_KEY = "XML:com.adobe.xmp"
 
+# Free-text fields (JPEG/GIF comment, PNG Comment/Description) are kept when
+# stripping only if they look like a rights notice.
+RIGHTS_TEXT_KEYS = {"Comment", "Description"}
+RIGHTS_TEXT_PATTERN = re.compile(
+    r"©|\(c\)|copyright|all rights reserved|licen[cs]e", re.IGNORECASE,
+)
+
+# IPTC-IIM datasets (record, dataset) kept when stripping: coded character set,
+# By-line, By-line Title, Credit, Source, Copyright Notice, Contact.
+IIM_CHARSET = (1, 90)
+IIM_BYLINE = (2, 80)
+IIM_COPYRIGHT = (2, 116)
+RIGHTS_IIM_DATASETS = {IIM_CHARSET, IIM_BYLINE, (2, 85), (2, 110), (2, 115), IIM_COPYRIGHT, (2, 118)}
+IIM_UTF8 = b"\x1b%G"
+
 XMP_NAMESPACES = {
     "x": "adobe:ns:meta/",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "dc": "http://purl.org/dc/elements/1.1/",
     "xmpRights": "http://ns.adobe.com/xap/1.0/rights/",
     "photoshop": "http://ns.adobe.com/photoshop/1.0/",
+    "Iptc4xmpCore": "http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/",
+    "Iptc4xmpExt": "http://iptc.org/std/Iptc4xmpExt/2008-02-29/",
+    "plus": "http://ns.useplus.org/ldf/xmp/1.0/",
 }
 _RDF = XMP_NAMESPACES["rdf"]
 RIGHTS_XMP_FIELDS = {
     f"{{{XMP_NAMESPACES['dc']}}}rights",
     f"{{{XMP_NAMESPACES['dc']}}}creator",
-    f"{{{XMP_NAMESPACES['xmpRights']}}}Marked",
-    f"{{{XMP_NAMESPACES['xmpRights']}}}Owner",
-    f"{{{XMP_NAMESPACES['xmpRights']}}}UsageTerms",
-    f"{{{XMP_NAMESPACES['xmpRights']}}}WebStatement",
     f"{{{XMP_NAMESPACES['photoshop']}}}Credit",
+    f"{{{XMP_NAMESPACES['photoshop']}}}Source",
+    f"{{{XMP_NAMESPACES['Iptc4xmpCore']}}}CreatorContactInfo",
+    f"{{{XMP_NAMESPACES['Iptc4xmpExt']}}}DigitalSourceType",
 }
+# Every field in these namespaces is licensing data (xmpRights:*, PLUS license IDs).
+RIGHTS_XMP_NAMESPACES = {XMP_NAMESPACES["xmpRights"], XMP_NAMESPACES["plus"]}
 for _prefix, _uri in XMP_NAMESPACES.items():
     ET.register_namespace(_prefix, _uri)
 
@@ -108,6 +129,65 @@ def _run_oxipng(path: Path, quality: int) -> None:
 
 # ── Metadata ──────────────────────────────────────────────────────────────────
 
+def _is_rights_xmp_field(tag: str) -> bool:
+    """True for an XMP property (Clark notation) that carries rights data."""
+    namespace = tag[1:].split("}", 1)[0] if tag.startswith("{") else ""
+    return tag in RIGHTS_XMP_FIELDS or namespace in RIGHTS_XMP_NAMESPACES
+
+
+def _looks_like_rights(text: str | bytes) -> bool:
+    """True when free text reads like a copyright or license notice."""
+    if isinstance(text, bytes):
+        text = text.decode("utf-8", "replace")
+    return bool(RIGHTS_TEXT_PATTERN.search(text))
+
+
+def _read_iim(img) -> dict:
+    """Return the IPTC-IIM datasets of a JPEG/TIFF as {(record, dataset): bytes | list}."""
+    try:
+        from PIL import IptcImagePlugin  # type: ignore[import]
+        return IptcImagePlugin.getiptcinfo(img) or {}
+    except Exception:
+        return {}
+
+
+def _iim_values(value: bytes | list) -> list[bytes]:
+    return value if isinstance(value, list) else [value]
+
+
+def _iim_text(iim: dict, key: tuple[int, int]) -> str | None:
+    """Decode the first value of an IIM dataset, honouring its character set."""
+    if key not in iim:
+        return None
+    raw = _iim_values(iim[key])[0]
+    utf8 = _iim_values(iim.get(IIM_CHARSET, b""))[0] == IIM_UTF8
+    return raw.decode("utf-8" if utf8 else "latin-1", "replace").strip() or None
+
+
+def _iim_app13(iim: dict, keep_all: bool) -> bytes | None:
+    """Serialise IIM datasets into a complete JPEG APP13 (Photoshop) segment.
+
+    Returns None when no record-2 dataset is left to write.
+    """
+    data = b""
+    for (record, dataset), value in sorted(iim.items()):
+        if not keep_all and (record, dataset) not in RIGHTS_IIM_DATASETS:
+            continue
+        for v in _iim_values(value):
+            if len(v) <= 0x7FFF:
+                data += struct.pack(">BBBH", 0x1C, record, dataset, len(v)) + v
+    if b"\x1c\x02" not in data:
+        return None
+    resource = (
+        b"8BIM" + struct.pack(">H", 0x0404) + b"\0\0"
+        + struct.pack(">I", len(data)) + data + b"\0" * (len(data) % 2)
+    )
+    payload = b"Photoshop 3.0\0" + resource
+    if len(payload) + 2 > 0xFFFF:
+        return None
+    return b"\xff\xed" + struct.pack(">H", len(payload) + 2) + payload
+
+
 def _rights_xmp(xmp: bytes | str) -> bytes | None:
     """Return a minimal XMP packet holding only the source's rights fields.
 
@@ -124,11 +204,11 @@ def _rights_xmp(xmp: bytes | str) -> bytes | None:
     found = False
     for desc in root.iter(f"{{{_RDF}}}Description"):
         for key, value in desc.attrib.items():
-            if key in RIGHTS_XMP_FIELDS:
+            if _is_rights_xmp_field(key):
                 out_desc.set(key, value)
                 found = True
         for child in desc:
-            if child.tag in RIGHTS_XMP_FIELDS:
+            if _is_rights_xmp_field(child.tag):
                 out_desc.append(child)
                 found = True
     if not found:
@@ -137,6 +217,59 @@ def _rights_xmp(xmp: bytes | str) -> bytes | None:
     meta = ET.Element(f"{{{XMP_NAMESPACES['x']}}}xmpmeta")
     ET.SubElement(meta, f"{{{_RDF}}}RDF").append(out_desc)
     return ET.tostring(meta, encoding="utf-8")
+
+
+def _xmp_with_iim(xmp: bytes | None, iim: dict) -> bytes | None:
+    """Copy IIM rights into XMP for outputs that cannot hold an IIM block.
+
+    Fields the XMP packet already has are left alone. XMP is UTF-8, so
+    non-ASCII names and the © sign survive, unlike in EXIF.
+    """
+    dc, ps = XMP_NAMESPACES["dc"], XMP_NAMESPACES["photoshop"]
+    mapping = {
+        f"{{{dc}}}rights": IIM_COPYRIGHT,
+        f"{{{dc}}}creator": IIM_BYLINE,
+        f"{{{ps}}}Credit": (2, 110),
+        f"{{{ps}}}Source": (2, 115),
+    }
+    values = {tag: _iim_text(iim, key) for tag, key in mapping.items()}
+    values = {tag: text for tag, text in values.items() if text}
+    if not values:
+        return xmp
+
+    root = None
+    if xmp:
+        try:
+            root = ET.fromstring(xmp.strip())
+        except ET.ParseError:
+            root = None
+    if root is None:
+        root = ET.Element(f"{{{XMP_NAMESPACES['x']}}}xmpmeta")
+    rdf = root if root.tag == f"{{{_RDF}}}RDF" else root.find(f"{{{_RDF}}}RDF")
+    if rdf is None:
+        rdf = ET.SubElement(root, f"{{{_RDF}}}RDF")
+    desc = rdf.find(f"{{{_RDF}}}Description")
+    if desc is None:
+        desc = ET.SubElement(rdf, f"{{{_RDF}}}Description", {f"{{{_RDF}}}about": ""})
+
+    present = set()
+    for d in rdf.iter(f"{{{_RDF}}}Description"):
+        present.update(d.attrib)
+        present.update(child.tag for child in d)
+
+    for tag, text in values.items():
+        if tag in present:
+            continue
+        el = ET.SubElement(desc, tag)
+        if tag == f"{{{dc}}}rights":
+            li = ET.SubElement(ET.SubElement(el, f"{{{_RDF}}}Alt"), f"{{{_RDF}}}li")
+            li.set("{http://www.w3.org/XML/1998/namespace}lang", "x-default")
+            li.text = text
+        elif tag == f"{{{dc}}}creator":
+            ET.SubElement(ET.SubElement(el, f"{{{_RDF}}}Seq"), f"{{{_RDF}}}li").text = text
+        else:
+            el.text = text
+    return ET.tostring(root, encoding="utf-8")
 
 
 def _is_srgb(icc: bytes) -> bool:
@@ -152,16 +285,22 @@ def _is_srgb(icc: bytes) -> bool:
 
 
 def _metadata_kwargs(
-    info: dict, exif, png_text: dict, out_fmt: str, keep_all: bool,
+    info: dict, exif, png_text: dict, iim: dict, out_fmt: str, keep_all: bool,
 ) -> dict:
     """Build Pillow save kwargs that carry source metadata into the output.
 
     Pillow copies no metadata on save unless told to. A non-sRGB ICC profile is
-    always kept so colours don't shift. With keep_all, EXIF/XMP/text and any ICC
-    profile go through as-is; otherwise only author and copyright fields survive.
+    always kept so colours don't shift. With keep_all, EXIF/XMP/IPTC/text and
+    any ICC profile go through as-is; otherwise only author, copyright and
+    license fields survive.
     """
     from PIL import Image, PngImagePlugin  # type: ignore[import]
 
+    comment = info.get("comment")
+    keep_comment = bool(comment) and (keep_all or _looks_like_rights(comment))
+
+    if out_fmt == "GIF":
+        return {} if keep_comment else {"comment": b""}
     if out_fmt not in ("JPEG", "PNG", "WEBP"):
         return {}
 
@@ -177,6 +316,11 @@ def _metadata_kwargs(
         for tag in RIGHTS_EXIF_TAGS:
             if tag in exif:
                 exif_out[tag] = exif[tag]
+
+    app13 = _iim_app13(iim, keep_all) if out_fmt == "JPEG" else None
+    if app13:
+        kwargs["extra"] = app13
+
     if len(exif_out):
         kwargs["exif"] = exif_out.tobytes()
 
@@ -184,11 +328,16 @@ def _metadata_kwargs(
     if isinstance(xmp, str):
         xmp = xmp.encode("utf-8")
     xmp_out = xmp if keep_all or not xmp else _rights_xmp(xmp)
+    if iim and not app13:
+        xmp_out = _xmp_with_iim(xmp_out, iim)
 
     if out_fmt == "PNG":
         pnginfo = PngImagePlugin.PngInfo()
         for key, value in png_text.items():
-            if key != PNG_XMP_KEY and (keep_all or key in RIGHTS_PNG_KEYS):
+            if key == PNG_XMP_KEY:
+                continue
+            rights_text = key in RIGHTS_TEXT_KEYS and _looks_like_rights(str(value))
+            if keep_all or key in RIGHTS_PNG_KEYS or rights_text:
                 pnginfo.add_itxt(key, str(value))
         if xmp_out:
             pnginfo.add_itxt(PNG_XMP_KEY, xmp_out.decode("utf-8", "replace"))
@@ -197,8 +346,8 @@ def _metadata_kwargs(
     else:
         if xmp_out:
             kwargs["xmp"] = xmp_out
-        if out_fmt == "JPEG" and keep_all and info.get("comment"):
-            kwargs["comment"] = info["comment"]
+        if out_fmt == "JPEG":
+            kwargs["comment"] = comment if keep_comment else b""
 
     return kwargs
 
@@ -277,6 +426,7 @@ def optimize_file(
     try:
         img = Image.open(source)
         png_text = dict(getattr(img, "text", None) or {})
+        src_iim = _read_iim(img)
 
         # Correct EXIF orientation before any resize so thumbnails face the right way.
         img = ImageOps.exif_transpose(img)
@@ -297,7 +447,7 @@ def optimize_file(
             img = img.resize((new_w, new_h), Image.LANCZOS)
 
         save_kwargs = _metadata_kwargs(
-            src_info, src_exif, png_text, out_fmt, keep_all=not strip_exif,
+            src_info, src_exif, png_text, src_iim, out_fmt, keep_all=not strip_exif,
         )
 
         if out_fmt == "JPEG":
