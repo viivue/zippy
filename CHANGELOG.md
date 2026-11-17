@@ -32,6 +32,10 @@ lockstep.
   outputs. zippy shows the warnings under each built font.
 - **vidopt:** keep `copyright`, `artist`, `author`, `album_artist`, `composer`
   and `license` container tags while still stripping all other metadata.
+- **vidopt:** carry XMP rights fields (`dc:rights`, `dc:creator`,
+  `xmpRights:*`, PLUS license IDs, `photoshop:Credit`/`Source`) from the
+  source's XMP `uuid` box or QuickTime `moov/udta/XMP_` into an XMP box
+  appended to the output; ffmpeg drops XMP entirely.
 
 ## [0.1.1] - 2026-09-03
 

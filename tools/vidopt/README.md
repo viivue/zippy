@@ -166,7 +166,14 @@ sudo dnf install ffmpeg   # Fedora / RHEL
 | Kept | Removed |
 |------|---------|
 | `copyright`, `artist`, `author`, `album_artist`, `composer`, `license` container tags | GPS location, creation date, device make/model |
-| | Encoder and handler tags, all other container and stream metadata |
+| XMP rights (Adobe Premiere/Media Encoder exports): `dc:rights`, `dc:creator`, `xmpRights:*`, `plus:*` license IDs, `photoshop:Credit`/`Source` | Other XMP: creator tool, history, GPS, edit details |
+| The AI-generated marker (`Iptc4xmpExt:DigitalSourceType`) | Encoder and handler tags, all other container and stream metadata |
+
+ffmpeg drops XMP, so vidopt reads it from the source (a top-level XMP `uuid`
+box, or `moov/udta/XMP_` in QuickTime files) and appends a new XMP `uuid` box
+holding only the rights fields to the output. Appending at the end of the file
+leaves the video data and fast-start layout untouched; it adds about 0.5 KB, and
+nothing for videos without XMP.
 
 Content Credentials (C2PA) are signed over the original media, so a re-encode
 invalidates them and they are not copied. vidopt prints a note for such files
