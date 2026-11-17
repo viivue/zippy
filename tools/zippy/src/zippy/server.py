@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import queue
+from importlib.metadata import version
 from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from imgopt.cli import DEFAULT_QUALITY as IMG_DEFAULT_QUALITY
 from pydantic import BaseModel, Field
@@ -27,9 +28,14 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 registry = JobRegistry()
 
 
+INDEX_HTML = (STATIC_DIR / "index.html").read_text(encoding="utf-8").replace(
+    "{{VERSION}}", version("zippy")
+)
+
+
 @app.get("/")
-def index() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html")
+def index() -> HTMLResponse:
+    return HTMLResponse(INDEX_HTML)
 
 
 # ── file/folder browsing ─────────────────────────────────────────────────────

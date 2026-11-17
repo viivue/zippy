@@ -55,6 +55,8 @@ what each tool keeps and removes.
 - **imgopt:** oxipng no longer strips the PNG text and EXIF chunks imgopt
   wrote on purpose.
 - `__version__` in `fontslice` and `vidopt` was stuck at 0.1.0.
+- **zippy:** the web UI sidebar showed a hardcoded v0.1.0; it now reads the
+  installed package version.
 
 ## [0.1.1] - 2026-09-03
 
