@@ -81,6 +81,15 @@ RIGHTS_XMP_FIELDS = {
     f"{{{XMP_NAMESPACES['Iptc4xmpCore']}}}CreatorContactInfo",
     f"{{{XMP_NAMESPACES['Iptc4xmpExt']}}}DigitalSourceType",
 }
+XMP_DIGITAL_SOURCE_TYPE = f"{{{XMP_NAMESPACES['Iptc4xmpExt']}}}DigitalSourceType"
+
+# C2PA Content Credentials live in a JUMBF box labelled "c2pa" (JPEG APP11,
+# PNG caBX, WebP C2PA chunk). The signature covers the original pixels, so a
+# re-encode invalidates it; the AI-generated marker inside is carried to XMP.
+C2PA_MARKERS = (b"jumb", b"c2pa")
+DIGITAL_SOURCE_TYPE_PATTERN = re.compile(
+    rb"https?://cv\.iptc\.org/newscodes/digitalsourcetype/[A-Za-z]+"
+)
 # Every field in these namespaces is licensing data (xmpRights:*, PLUS license IDs).
 RIGHTS_XMP_NAMESPACES = {XMP_NAMESPACES["xmpRights"], XMP_NAMESPACES["plus"]}
 for _prefix, _uri in XMP_NAMESPACES.items():
@@ -104,6 +113,7 @@ class FileResult:
     output_size: int
     status: str   # OK | LARGER | COPIED | SKIPPED | FAILED | DRY-RUN
     error: str = ""
+    note: str = ""
 
 
 # ── PNG post-processing ───────────────────────────────────────────────────────
@@ -219,11 +229,26 @@ def _rights_xmp(xmp: bytes | str) -> bytes | None:
     return ET.tostring(meta, encoding="utf-8")
 
 
-def _xmp_with_iim(xmp: bytes | None, iim: dict) -> bytes | None:
-    """Copy IIM rights into XMP for outputs that cannot hold an IIM block.
+def _scan_c2pa(path: Path) -> tuple[bool, str | None]:
+    """Detect C2PA Content Credentials in a file.
 
-    Fields the XMP packet already has are left alone. XMP is UTF-8, so
-    non-ASCII names and the © sign survive, unlike in EXIF.
+    Returns (found, digital_source_type), the latter being the IPTC
+    DigitalSourceType URL declared in the manifest, if any.
+    """
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return False, None
+    if not all(marker in data for marker in C2PA_MARKERS):
+        return False, None
+    match = DIGITAL_SOURCE_TYPE_PATTERN.search(data)
+    return True, match.group(0).decode("ascii") if match else None
+
+
+def _iim_xmp_values(iim: dict) -> dict[str, str]:
+    """Map IIM rights datasets to their XMP properties, for outputs without IIM.
+
+    XMP is UTF-8, so non-ASCII names and the © sign survive, unlike in EXIF.
     """
     dc, ps = XMP_NAMESPACES["dc"], XMP_NAMESPACES["photoshop"]
     mapping = {
@@ -233,9 +258,14 @@ def _xmp_with_iim(xmp: bytes | None, iim: dict) -> bytes | None:
         f"{{{ps}}}Source": (2, 115),
     }
     values = {tag: _iim_text(iim, key) for tag, key in mapping.items()}
-    values = {tag: text for tag, text in values.items() if text}
+    return {tag: text for tag, text in values.items() if text}
+
+
+def _xmp_add(xmp: bytes | None, values: dict[str, str]) -> bytes | None:
+    """Add simple XMP properties, leaving any the packet already has alone."""
     if not values:
         return xmp
+    dc = XMP_NAMESPACES["dc"]
 
     root = None
     if xmp:
@@ -286,6 +316,7 @@ def _is_srgb(icc: bytes) -> bool:
 
 def _metadata_kwargs(
     info: dict, exif, png_text: dict, iim: dict, out_fmt: str, keep_all: bool,
+    ai_source_type: str | None = None,
 ) -> dict:
     """Build Pillow save kwargs that carry source metadata into the output.
 
@@ -328,8 +359,10 @@ def _metadata_kwargs(
     if isinstance(xmp, str):
         xmp = xmp.encode("utf-8")
     xmp_out = xmp if keep_all or not xmp else _rights_xmp(xmp)
-    if iim and not app13:
-        xmp_out = _xmp_with_iim(xmp_out, iim)
+    extra_xmp = _iim_xmp_values(iim) if iim and not app13 else {}
+    if ai_source_type:
+        extra_xmp[XMP_DIGITAL_SOURCE_TYPE] = ai_source_type
+    xmp_out = _xmp_add(xmp_out, extra_xmp)
 
     if out_fmt == "PNG":
         pnginfo = PngImagePlugin.PngInfo()
@@ -427,6 +460,7 @@ def optimize_file(
         img = Image.open(source)
         png_text = dict(getattr(img, "text", None) or {})
         src_iim = _read_iim(img)
+        has_c2pa, ai_source_type = _scan_c2pa(source)
 
         # Correct EXIF orientation before any resize so thumbnails face the right way.
         img = ImageOps.exif_transpose(img)
@@ -448,6 +482,7 @@ def optimize_file(
 
         save_kwargs = _metadata_kwargs(
             src_info, src_exif, png_text, src_iim, out_fmt, keep_all=not strip_exif,
+            ai_source_type=ai_source_type,
         )
 
         if out_fmt == "JPEG":
@@ -519,10 +554,21 @@ def optimize_file(
             f"  NOTE: {source.name} output is larger "
             f"({_fmt_bytes(output_size)} > {_fmt_bytes(input_size)})"
         )
+
+    note = ""
+    if has_c2pa:
+        note = (
+            "Content Credentials (C2PA) found. Re-encoding invalidates their "
+            "signature, so they were not copied."
+        )
+        if ai_source_type and out_fmt != "GIF":
+            note += " The AI-generated marker was kept in XMP."
+        print(f"  NOTE: {source.name}: {note}")
     return FileResult(
         source=source, output=output_path,
         input_size=input_size, output_size=output_size,
         status="LARGER" if is_larger else "OK",
+        note=note,
     )
 
 

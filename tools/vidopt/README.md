@@ -168,6 +168,11 @@ sudo dnf install ffmpeg   # Fedora / RHEL
 | `copyright`, `artist`, `author`, `album_artist`, `composer`, `license` container tags | GPS location, creation date, device make/model |
 | | Encoder and handler tags, all other container and stream metadata |
 
+Content Credentials (C2PA) are signed over the original media, so a re-encode
+invalidates them and they are not copied. vidopt prints a note for such files
+and writes the AI-generated marker (`DigitalSourceType`) from the manifest into
+an XMP box in the output.
+
 Rotation metadata is not kept because ffmpeg bakes the rotation into the
 pixels.
 

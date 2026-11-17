@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -48,6 +50,15 @@ OUTPUT_SUBFOLDER = "optimized"
 
 # Container tags carried over even though all other metadata is stripped.
 RIGHTS_TAGS = ("copyright", "artist", "author", "album_artist", "composer", "license")
+
+# ISO BMFF top-level "uuid" boxes. C2PA Content Credentials are signed over
+# the original media, so a re-encode invalidates them; the AI-generated marker
+# inside is carried over to an XMP box instead.
+C2PA_UUID = bytes.fromhex("d8fec3d61b0e483c92975828877ec481")
+XMP_UUID = bytes.fromhex("be7acfcb97a942e89c71999491e3afac")
+DIGITAL_SOURCE_TYPE_PATTERN = re.compile(
+    rb"https?://cv\.iptc\.org/newscodes/digitalsourcetype/[A-Za-z]+"
+)
 
 # ── ffmpeg auto-download (Windows only) ──────────────────────────────────────
 FFMPEG_DOWNLOAD_URL = (
@@ -92,6 +103,7 @@ class FileResult:
     resolution: str
     status: str  # OK | LARGER | SKIPPED | FAILED | DRY-RUN
     error: str = ""
+    note: str = ""
 
 
 # ── ffmpeg resolution ─────────────────────────────────────────────────────────
@@ -237,6 +249,81 @@ def probe_video(ffprobe: str, path: Path) -> VideoInfo:
     )
 
 
+# ── Provenance metadata ───────────────────────────────────────────────────────
+
+def _iter_boxes(f, start: int, end: int):
+    """Yield (type, payload_offset, payload_size) for ISO BMFF boxes in [start, end)."""
+    pos = start
+    while pos + 8 <= end:
+        f.seek(pos)
+        header = f.read(8)
+        if len(header) < 8:
+            return
+        size, box_type = struct.unpack(">I4s", header)
+        header_len = 8
+        if size == 1:
+            size = struct.unpack(">Q", f.read(8))[0]
+            header_len = 16
+        elif size == 0:
+            size = end - pos
+        if size < header_len or pos + size > end:
+            return
+        yield box_type, pos + header_len, size - header_len
+        pos += size
+
+
+def _read_uuid_box(path: Path, uuid: bytes, max_size: int = 64 * 1024 * 1024) -> bytes | None:
+    """Return the payload (after the 16-byte UUID) of a top-level uuid box."""
+    try:
+        with path.open("rb") as f:
+            end = path.stat().st_size
+            for box_type, offset, size in _iter_boxes(f, 0, end):
+                if box_type != b"uuid" or size < 16 or size > max_size:
+                    continue
+                f.seek(offset)
+                if f.read(16) == uuid:
+                    return f.read(size - 16)
+    except OSError:
+        return None
+    return None
+
+
+def _append_uuid_box(path: Path, uuid: bytes, payload: bytes) -> None:
+    """Append a top-level uuid box; earlier boxes and their offsets are untouched."""
+    with path.open("ab") as f:
+        f.write(struct.pack(">I4s", 8 + 16 + len(payload), b"uuid") + uuid + payload)
+
+
+def _digital_source_type_xmp(url: str) -> bytes:
+    return (
+        '<x:xmpmeta xmlns:x="adobe:ns:meta/">'
+        '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
+        '<rdf:Description rdf:about="" '
+        'xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/">'
+        f"<Iptc4xmpExt:DigitalSourceType>{url}</Iptc4xmpExt:DigitalSourceType>"
+        "</rdf:Description></rdf:RDF></x:xmpmeta>"
+    ).encode()
+
+
+def carry_over_provenance(source: Path, output: Path) -> str:
+    """Carry provenance metadata from source to a finished output MP4.
+
+    Returns a note for the user, or "" when there is nothing to report.
+    """
+    manifest = _read_uuid_box(source, C2PA_UUID)
+    if manifest is None:
+        return ""
+    note = (
+        "Content Credentials (C2PA) found. Re-encoding invalidates their "
+        "signature, so they were not copied."
+    )
+    match = DIGITAL_SOURCE_TYPE_PATTERN.search(manifest)
+    if match:
+        _append_uuid_box(output, XMP_UUID, _digital_source_type_xmp(match.group(0).decode("ascii")))
+        note += " The AI-generated marker was kept in XMP."
+    return note
+
+
 # ── Command builder ───────────────────────────────────────────────────────────
 
 def build_ffmpeg_command(
@@ -358,6 +445,10 @@ def optimize_file(
             error=excerpt or "non-zero exit from ffmpeg",
         )
 
+    note = carry_over_provenance(source, output_path)
+    if note:
+        print(f"  NOTE: {note}")
+
     output_size = output_path.stat().st_size
     is_larger   = output_size > input_size
     if is_larger:
@@ -371,6 +462,7 @@ def optimize_file(
         input_size=input_size, output_size=output_size,
         resolution=resolution,
         status="LARGER" if is_larger else "OK",
+        note=note,
     )
 
 

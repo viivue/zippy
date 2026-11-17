@@ -36,6 +36,7 @@ def _file_result_to_dict(result: Any) -> dict[str, Any]:
         "resolution": getattr(result, "resolution", None),
         "status": result.status,
         "error": result.error,
+        "note": getattr(result, "note", ""),
     }
 
 
@@ -97,6 +98,7 @@ def _encode_with_progress(
         OUTPUT_EXTENSION,
         FileResult,
         build_ffmpeg_command,
+        carry_over_provenance,
         probe_video,
     )
 
@@ -152,6 +154,7 @@ def _encode_with_progress(
             error=excerpt or "non-zero exit from ffmpeg",
         )
 
+    note = carry_over_provenance(source, output_path)
     output_size = output_path.stat().st_size
     is_larger = output_size > input_size
     return FileResult(
@@ -161,6 +164,7 @@ def _encode_with_progress(
         output_size=output_size,
         resolution=resolution,
         status="LARGER" if is_larger else "OK",
+        note=note,
     )
 
 

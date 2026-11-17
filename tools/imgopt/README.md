@@ -201,6 +201,11 @@ re-process them.
 | JPEG/GIF comments and PNG `Comment`/`Description` that read like a copyright or license notice | All other EXIF/IPTC/XMP/PNG text |
 | Non-sRGB colour profiles (Display P3, Adobe RGB) | Plain sRGB colour profiles (browsers assume sRGB) |
 
+Content Credentials (C2PA) cannot survive a re-encode, because their
+signature covers the original pixels. imgopt prints a note for such files and
+copies the AI-generated marker (`DigitalSourceType`) from the manifest into the
+output's XMP. When the original is kept (`COPIED`), its credentials stay intact.
+
 IPTC-IIM can only be written to JPEG. When converting to WebP or PNG, its
 rights fields are copied into XMP instead, which keeps non-ASCII names and the
 `©` sign intact.

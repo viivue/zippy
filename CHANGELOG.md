@@ -17,6 +17,10 @@ lockstep.
   Notice, Contact), PLUS and IPTC licensing XMP, the AI-generated marker
   (`DigitalSourceType`) and comments that read like a rights notice. IIM rights
   are copied into XMP when converting to WebP or PNG.
+- **imgopt, vidopt:** detect C2PA Content Credentials, report that the
+  re-encode invalidates them, and carry the AI-generated marker
+  (`DigitalSourceType`) into the output's XMP. zippy shows the note under the
+  file name in the results table.
 - **imgopt:** private JPEG and GIF comments are now stripped by default; Pillow
   used to copy them through.
 - **fontslice:** keep every `name` table record, so trademark, manufacturer,
