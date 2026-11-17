@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 
@@ -140,6 +141,114 @@ def fix_ink_metrics(path: str, margin: int = 20) -> bool:
         font.close()
 
 
+# OS/2.fsType embedding bits (OpenType spec).
+FSTYPE_RESTRICTED = 0x0002
+FSTYPE_PREVIEW_PRINT = 0x0004
+FSTYPE_NO_SUBSETTING = 0x0100
+FSTYPE_BITMAP_ONLY = 0x0200
+
+OFL_PATTERN = r"open font licen[cs]e|scripts\.sil\.org/ofl|openfontlicense\.org"
+OFL_RE = re.compile(OFL_PATTERN, re.IGNORECASE)
+OPEN_LICENSE_RE = re.compile(
+    OFL_PATTERN + r"|apache licen[cs]e|ubuntu font licen[cs]e", re.IGNORECASE,
+)
+RESERVED_NAME_RE = re.compile(r"reserved font names?", re.IGNORECASE)
+
+LICENSE_NAME_IDS: dict[int, str] = {
+    0: "Copyright",
+    7: "Trademark",
+    8: "Manufacturer",
+    9: "Designer",
+    11: "Vendor URL",
+    12: "Designer URL",
+    13: "License",
+    14: "License URL",
+}
+
+
+def _name(font, name_id: int) -> str:
+    record = font["name"].getDebugName(name_id) if "name" in font else None
+    return (record or "").strip()
+
+
+def check_font_license(path: str) -> list[str]:
+    """Return warnings about a font's embedding permissions and license.
+
+    Reads OS/2.fsType and the license name records. An empty list means an
+    open license (OFL, Apache, Ubuntu Font Licence) with no restrictions found.
+    """
+    from fontTools.ttLib import TTFont
+
+    font = TTFont(path, lazy=True)
+    try:
+        fs_type = font["OS/2"].fsType if "OS/2" in font else 0
+        license_text = " ".join(_name(font, i) for i in (0, 13, 14))
+        license_desc = " ".join(_name(font, 13).split())
+    finally:
+        font.close()
+
+    warnings: list[str] = []
+    if fs_type & FSTYPE_RESTRICTED:
+        warnings.append(
+            "Embedding is restricted (fsType 2): the font's license forbids "
+            "embedding it, so it must not be served as a web font without a "
+            "separate web font license."
+        )
+    elif fs_type & FSTYPE_PREVIEW_PRINT:
+        warnings.append(
+            "Embedding is preview and print only (fsType 4): web use usually "
+            "needs a separate web font license."
+        )
+    if fs_type & FSTYPE_NO_SUBSETTING:
+        warnings.append("The font forbids subsetting (fsType bit 8).")
+    if fs_type & FSTYPE_BITMAP_ONLY:
+        warnings.append("The font allows bitmap embedding only (fsType bit 9).")
+
+    if not OPEN_LICENSE_RE.search(license_text):
+        summary = license_desc[:140] + ("..." if len(license_desc) > 140 else "")
+        warnings.append(
+            "Not an open license (OFL/Apache): check that it allows web use. "
+            + (f'License says: "{summary}"' if summary else "The font has no license text.")
+        )
+    elif OFL_RE.search(license_text) and RESERVED_NAME_RE.search(license_text):
+        warnings.append(
+            "OFL font with a Reserved Font Name: a subset counts as a Modified "
+            "Version, which OFL says must not use the reserved name unless the "
+            "copyright holder allows it."
+        )
+    return warnings
+
+
+def write_license_file(path: str, out_dir: str) -> str | None:
+    """Write the font's copyright and license records to <Family>-LICENSE.txt.
+
+    OFL and most licenses require the notice to travel with the font, and the
+    name table often holds only a summary. Returns the file path, or None when
+    the font has no copyright or license records.
+    """
+    from fontTools.ttLib import TTFont
+
+    font = TTFont(path, lazy=True)
+    try:
+        family = _name(font, 16) or _name(font, 1) or os.path.splitext(os.path.basename(path))[0]
+        records = [(label, _name(font, i)) for i, label in LICENSE_NAME_IDS.items()]
+    finally:
+        font.close()
+
+    records = [(label, text) for label, text in records if text]
+    if not any(label in ("Copyright", "License", "License URL") for label, _ in records):
+        return None
+
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", family).strip("-") or "font"
+    out_path = os.path.join(out_dir or ".", f"{slug}-LICENSE.txt")
+    lines = [family, "=" * len(family), ""]
+    for label, text in records:
+        lines += [f"{label}:", text, ""]
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+    return out_path
+
+
 def _font_axes(path: str) -> dict[str, float]:
     from fontTools.ttLib import TTFont
     f = TTFont(path, lazy=True)
@@ -173,6 +282,11 @@ def process_font(
 
     orig_size = os.path.getsize(src)
     print(f"Input : {src} ({_fmt_size(orig_size)})")
+    try:
+        for warning in check_font_license(src):
+            print(f"  WARNING: {warning}")
+    except Exception as exc:
+        print(f"  Warning: could not read the font's license info: {exc}", file=sys.stderr)
 
     if text_file:
         if not os.path.isfile(text_file):
@@ -255,6 +369,13 @@ def process_font(
 
     if work == instanced:
         print(f"\n  Instanced TTF saved at: {instanced}")
+
+    try:
+        license_path = write_license_file(src, out_dir)
+        if license_path:
+            print(f"  License notice: {license_path}")
+    except Exception as exc:
+        print(f"  Warning: could not write the license file: {exc}", file=sys.stderr)
 
     return results
 

@@ -400,7 +400,7 @@ def run_imgopt_job(job: Job, params: dict[str, Any]) -> None:
 
 def run_fontslice_job(job: Job, params: dict[str, Any]) -> None:
     from fontslice.cli import parse_weight_entry, validate_subsets
-    from fontslice.subset_font import process_font
+    from fontslice.subset_font import check_font_license, process_font
 
     fonts_dir = params["fonts_dir"]
     text_file = params.get("text_file") or None
@@ -453,9 +453,15 @@ def run_fontslice_job(job: Job, params: dict[str, Any]) -> None:
     failures = 0
     built: list[dict] = []
 
+    license_notes: dict[str, str] = {}
     for idx, (font, weight_arg, out_stem) in enumerate(plan):
         job.set_progress(idx / total * 100, current_file=out_stem)
         orig_size = os.path.getsize(font["font_path"])
+        if font["font_path"] not in license_notes:
+            try:
+                license_notes[font["font_path"]] = " ".join(check_font_license(font["font_path"]))
+            except Exception:
+                license_notes[font["font_path"]] = ""
         try:
             sizes = process_font(
                 src=font["font_path"],
@@ -477,6 +483,7 @@ def run_fontslice_job(job: Job, params: dict[str, Any]) -> None:
                     "saved_pct": saved_pct,
                     "status": "OK",
                     "error": "",
+                    "note": license_notes[font["font_path"]],
                 }
             )
             net_saved += orig_size - woff2_size
