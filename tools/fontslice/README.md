@@ -198,6 +198,27 @@ URL. The embedding permissions (`OS/2.fsType`) are kept too. Only glyphs and
 OpenType features outside the chosen subset are removed. Keeping the full
 `name` table adds about 1 KB per woff2, mostly the license text.
 
+## License checks
+
+Keeping the license text does not make every font legal to serve on the web.
+Before each build fontslice reads the font's embedding permissions and license
+and prints a warning (also shown under the file name in zippy) when:
+
+| Check | Warning |
+|-------|---------|
+| `fsType` bit 1 (restricted) | The license forbids embedding; do not serve it as a web font without a separate web font license |
+| `fsType` bit 2 (preview and print) | Web use usually needs a separate web font license |
+| `fsType` bit 8 / bit 9 | No subsetting allowed / bitmap embedding only |
+| License is not OFL, Apache or Ubuntu Font Licence | Check that the license allows web use; the first part of the license text is quoted |
+| OFL with a Reserved Font Name | A subset is a Modified Version, which must not use the reserved name unless the copyright holder allows it |
+
+The output is built either way; the warnings are for you to act on.
+
+fontslice also writes a `<Family>-LICENSE.txt` next to the outputs with the
+font's copyright, trademark, manufacturer, designer, URLs, license and license
+URL. OFL and most other licenses require this notice to travel with the font.
+It is never loaded by browsers.
+
 ## Output
 
 For each font:

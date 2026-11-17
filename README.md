@@ -109,6 +109,11 @@ source's license terms. Source files are never touched.
 | fontslice | Every `name` table record: copyright, trademark, manufacturer, designer, description, vendor/designer URLs, license and license URL. Embedding permissions (`OS/2.fsType`) | Glyphs and OpenType features outside the chosen subset (that is the point of subsetting) |
 | vidopt | Container tags `copyright`, `artist`, `author`, `album_artist`, `composer`, `license` | GPS location, creation date, device make/model, encoder and handler tags, all other container and stream metadata. Rotation is baked into the pixels |
 
+fontslice also warns when a font's embedding permissions or license may not
+allow web use (restricted `fsType`, a non-open license, an OFL Reserved Font
+Name), and writes a `<Family>-LICENSE.txt` next to the outputs. See
+[fontslice license checks](tools/fontslice/README.md#license-checks).
+
 **Content Credentials (C2PA)** in images and videos are signed over the
 original pixels, so any re-encode invalidates them and they are not copied.
 imgopt and vidopt flag such files with a note (CLI output and the zippy results

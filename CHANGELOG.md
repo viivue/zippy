@@ -25,6 +25,11 @@ lockstep.
   used to copy them through.
 - **fontslice:** keep every `name` table record, so trademark, manufacturer,
   designer, license and license URL survive subsetting.
+- **fontslice:** warn when a font's embedding permissions (`fsType`
+  restricted, preview and print, no subsetting, bitmap only) or license (not
+  OFL/Apache, or an OFL Reserved Font Name) may not allow web use, and write a
+  `<Family>-LICENSE.txt` with the copyright and license records next to the
+  outputs. zippy shows the warnings under each built font.
 - **vidopt:** keep `copyright`, `artist`, `author`, `album_artist`, `composer`
   and `license` container tags while still stripping all other metadata.
 
