@@ -161,6 +161,16 @@ sudo apt install ffmpeg   # Debian / Ubuntu
 sudo dnf install ffmpeg   # Fedora / RHEL
 ```
 
+## Metadata
+
+| Kept | Removed |
+|------|---------|
+| `copyright`, `artist`, `author`, `album_artist`, `composer`, `license` container tags | GPS location, creation date, device make/model |
+| | Encoder and handler tags, all other container and stream metadata |
+
+Rotation metadata is not kept because ffmpeg bakes the rotation into the
+pixels.
+
 ## End-of-run report
 
 ```

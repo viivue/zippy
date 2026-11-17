@@ -190,6 +190,14 @@ Use `--subsets all` to include every defined subset in one pass.
 | Fix | fontslice measures each build's actual glyph ink and widens `hhea`/`OS2` ascent and descent to fit, automatically. Metadata only, never shrinks. |
 | Action needed | None, this is automatic. A patched font prints its old/new values during build. |
 
+## Metadata
+
+Every `name` table record survives subsetting: copyright, trademark,
+manufacturer, designer, description, vendor/designer URLs, license and license
+URL. The embedding permissions (`OS/2.fsType`) are kept too. Only glyphs and
+OpenType features outside the chosen subset are removed. Keeping the full
+`name` table adds about 1 KB per woff2, mostly the license text.
+
 ## Output
 
 For each font:

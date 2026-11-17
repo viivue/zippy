@@ -97,6 +97,37 @@ cross-dependencies.
 
 ---
 
+## Metadata and copyright
+
+Optimized files drop private and unneeded metadata, but every tool keeps
+copyright, author and license information so outputs stay compliant with the
+source's license terms. Source files are never touched.
+
+| Tool | Kept | Removed |
+|------|------|---------|
+| imgopt | EXIF Artist and Copyright, XMP rights (`dc:rights`, `dc:creator`, `xmpRights:*`, `photoshop:Credit`), PNG Copyright/Author/Disclaimer text, non-sRGB colour profiles (Display P3, Adobe RGB) | Camera make/model, lens and exposure settings, GPS location, dates, thumbnails, software tags, comments, all other EXIF/XMP/PNG text, plain sRGB colour profiles (browsers assume sRGB) |
+| fontslice | Every `name` table record: copyright, trademark, manufacturer, designer, description, vendor/designer URLs, license and license URL. Embedding permissions (`OS/2.fsType`) | Glyphs and OpenType features outside the chosen subset (that is the point of subsetting) |
+| vidopt | Container tags `copyright`, `artist`, `author`, `album_artist`, `composer`, `license` | GPS location, creation date, device make/model, encoder and handler tags, all other container and stream metadata. Rotation is baked into the pixels |
+
+Pass `--keep-exif` to imgopt (or tick **Keep all metadata** in the zippy
+Images tab) to keep every piece of image metadata, including GPS and camera
+details.
+
+Keeping the rights data costs very little:
+
+| File | Without rights data | With rights data | Difference |
+|------|---------------------|------------------|------------|
+| photo.jpg, 1200x800 | 210,494 B | 210,998 B | +504 B (0.2%) |
+| photo.webp, 1200x800 | 214,716 B | 215,212 B | +496 B (0.2%) |
+| graphic.png | 921 B | 1,472 B | +551 B |
+| Arial, latin subset, woff2 | 52,056 B | 53,124 B | +1.0 KB |
+| Segoe UI, latin subset, woff2 | 28,452 B | 29,436 B | +1.0 KB |
+
+Images grow only by the size of the copyright text, and fonts mostly by the
+license text. Compression quality is unchanged.
+
+---
+
 ## Contributing
 
 Adding a new tool? See [CONTRIBUTING.md](CONTRIBUTING.md).

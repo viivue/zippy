@@ -2,10 +2,9 @@
 
 Command-line tool for optimizing images for web delivery.
 Compresses JPEG, PNG, WebP, GIF, BMP, and TIFF files using Pillow.
-Source files are never modified or deleted. Metadata (camera details, GPS,
-comments) is stripped by default, but author and copyright fields (EXIF
-Artist/Copyright, XMP rights, PNG Copyright/Author text) and non-sRGB colour
-profiles are always kept.
+Source files are never modified or deleted. Private metadata is stripped by
+default, but copyright and author fields are always kept, see
+[Metadata](#metadata).
 
 ## Quick start
 
@@ -189,6 +188,19 @@ few-colour graphic to JPEG.
 
 Files marked `SKIPPED` already have an output in place, pass `--overwrite` to
 re-process them.
+
+## Metadata
+
+| Kept by default | Removed by default |
+|-----------------|--------------------|
+| EXIF Artist and Copyright | Camera make/model, lens and exposure settings |
+| XMP rights: `dc:rights`, `dc:creator`, `xmpRights:*`, `photoshop:Credit` | GPS location (EXIF and XMP) |
+| PNG `Copyright`, `Author`, `Disclaimer` text | Dates, thumbnails, software tags |
+| Non-sRGB colour profiles (Display P3, Adobe RGB) | Comments and all other EXIF/XMP/PNG text |
+| | Plain sRGB colour profiles (browsers assume sRGB) |
+
+`--keep-exif` keeps everything, including GPS and camera details. Keeping the
+rights fields adds about 0.5 KB per image.
 
 ## Development
 
