@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tempfile
 import urllib.request
+import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -59,6 +60,31 @@ XMP_UUID = bytes.fromhex("be7acfcb97a942e89c71999491e3afac")
 DIGITAL_SOURCE_TYPE_PATTERN = re.compile(
     rb"https?://cv\.iptc\.org/newscodes/digitalsourcetype/[A-Za-z]+"
 )
+
+# XMP rights fields carried over from the source (same set as imgopt).
+XMP_NAMESPACES = {
+    "x": "adobe:ns:meta/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "xmpRights": "http://ns.adobe.com/xap/1.0/rights/",
+    "photoshop": "http://ns.adobe.com/photoshop/1.0/",
+    "Iptc4xmpCore": "http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/",
+    "Iptc4xmpExt": "http://iptc.org/std/Iptc4xmpExt/2008-02-29/",
+    "plus": "http://ns.useplus.org/ldf/xmp/1.0/",
+}
+_RDF = XMP_NAMESPACES["rdf"]
+XMP_DIGITAL_SOURCE_TYPE = f"{{{XMP_NAMESPACES['Iptc4xmpExt']}}}DigitalSourceType"
+RIGHTS_XMP_FIELDS = {
+    f"{{{XMP_NAMESPACES['dc']}}}rights",
+    f"{{{XMP_NAMESPACES['dc']}}}creator",
+    f"{{{XMP_NAMESPACES['photoshop']}}}Credit",
+    f"{{{XMP_NAMESPACES['photoshop']}}}Source",
+    f"{{{XMP_NAMESPACES['Iptc4xmpCore']}}}CreatorContactInfo",
+    XMP_DIGITAL_SOURCE_TYPE,
+}
+RIGHTS_XMP_NAMESPACES = {XMP_NAMESPACES["xmpRights"], XMP_NAMESPACES["plus"]}
+for _prefix, _uri in XMP_NAMESPACES.items():
+    ET.register_namespace(_prefix, _uri)
 
 # ── ffmpeg auto-download (Windows only) ──────────────────────────────────────
 FFMPEG_DOWNLOAD_URL = (
@@ -294,33 +320,87 @@ def _append_uuid_box(path: Path, uuid: bytes, payload: bytes) -> None:
         f.write(struct.pack(">I4s", 8 + 16 + len(payload), b"uuid") + uuid + payload)
 
 
-def _digital_source_type_xmp(url: str) -> bytes:
-    return (
-        '<x:xmpmeta xmlns:x="adobe:ns:meta/">'
-        '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
-        '<rdf:Description rdf:about="" '
-        'xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/">'
-        f"<Iptc4xmpExt:DigitalSourceType>{url}</Iptc4xmpExt:DigitalSourceType>"
-        "</rdf:Description></rdf:RDF></x:xmpmeta>"
-    ).encode()
+def _read_udta_xmp(path: Path, max_size: int = 16 * 1024 * 1024) -> bytes | None:
+    """Return the QuickTime moov/udta/XMP_ payload, where .mov files keep XMP."""
+    try:
+        with path.open("rb") as f:
+            start, end = 0, path.stat().st_size
+            for wanted in (b"moov", b"udta", b"XMP_"):
+                for box_type, offset, size in _iter_boxes(f, start, end):
+                    if box_type == wanted:
+                        start, end = offset, offset + size
+                        break
+                else:
+                    return None
+            if end - start > max_size:
+                return None
+            f.seek(start)
+            return f.read(end - start)
+    except OSError:
+        return None
+
+
+def _is_rights_xmp_field(tag: str) -> bool:
+    namespace = tag[1:].split("}", 1)[0] if tag.startswith("{") else ""
+    return tag in RIGHTS_XMP_FIELDS or namespace in RIGHTS_XMP_NAMESPACES
+
+
+def _rights_xmp(xmp: bytes | None, digital_source_type: str | None) -> bytes | None:
+    """Build an XMP packet with only the source's rights fields plus the AI marker.
+
+    Returns None when there is nothing to write.
+    """
+    out_desc = ET.Element(f"{{{_RDF}}}Description", {f"{{{_RDF}}}about": ""})
+    present: set[str] = set()
+    if xmp:
+        try:
+            root = ET.fromstring(xmp.strip(b"\0").strip())
+        except ET.ParseError:
+            root = None
+        for desc in root.iter(f"{{{_RDF}}}Description") if root is not None else ():
+            for key, value in desc.attrib.items():
+                if _is_rights_xmp_field(key):
+                    out_desc.set(key, value)
+                    present.add(key)
+            for child in desc:
+                if _is_rights_xmp_field(child.tag):
+                    out_desc.append(child)
+                    present.add(child.tag)
+    if digital_source_type and XMP_DIGITAL_SOURCE_TYPE not in present:
+        ET.SubElement(out_desc, XMP_DIGITAL_SOURCE_TYPE).text = digital_source_type
+        present.add(XMP_DIGITAL_SOURCE_TYPE)
+    if not present:
+        return None
+    meta = ET.Element(f"{{{XMP_NAMESPACES['x']}}}xmpmeta")
+    ET.SubElement(meta, f"{{{_RDF}}}RDF").append(out_desc)
+    return ET.tostring(meta, encoding="utf-8")
 
 
 def carry_over_provenance(source: Path, output: Path) -> str:
-    """Carry provenance metadata from source to a finished output MP4.
+    """Carry rights XMP and provenance from source to a finished output MP4.
 
-    Returns a note for the user, or "" when there is nothing to report.
+    ffmpeg drops XMP, so the source's XMP rights fields (top-level uuid box
+    or QuickTime moov/udta/XMP_) and any C2PA AI marker are written to a new
+    XMP uuid box. Returns a note for the user, or "" when there is none.
     """
+    xmp = _read_uuid_box(source, XMP_UUID) or _read_udta_xmp(source)
+
+    note = ""
+    digital_source_type = None
     manifest = _read_uuid_box(source, C2PA_UUID)
-    if manifest is None:
-        return ""
-    note = (
-        "Content Credentials (C2PA) found. Re-encoding invalidates their "
-        "signature, so they were not copied."
-    )
-    match = DIGITAL_SOURCE_TYPE_PATTERN.search(manifest)
-    if match:
-        _append_uuid_box(output, XMP_UUID, _digital_source_type_xmp(match.group(0).decode("ascii")))
-        note += " The AI-generated marker was kept in XMP."
+    if manifest is not None:
+        note = (
+            "Content Credentials (C2PA) found. Re-encoding invalidates their "
+            "signature, so they were not copied."
+        )
+        match = DIGITAL_SOURCE_TYPE_PATTERN.search(manifest)
+        if match:
+            digital_source_type = match.group(0).decode("ascii")
+            note += " The AI-generated marker was kept in XMP."
+
+    packet = _rights_xmp(xmp, digital_source_type)
+    if packet:
+        _append_uuid_box(output, XMP_UUID, packet)
     return note
 
 
