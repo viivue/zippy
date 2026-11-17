@@ -9,6 +9,17 @@ function fmtBytes(n) {
   return `${(n / 1024 ** 2).toFixed(1)} MB`;
 }
 
+/* Escape text for safe insertion into HTML. */
+function escapeHtml(text) {
+  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  return String(text).replace(/[&<>"']/g, (c) => map[c]);
+}
+
+/* Render a result's note as a small line under the file name, or nothing. */
+function noteHtml(r) {
+  return r.note ? `<div class="result-note">${escapeHtml(r.note)}</div>` : "";
+}
+
 function statusTag(status) {
   const map = {
     OK: "tag-ok",
@@ -157,7 +168,7 @@ function renderImgResults(results) {
     .map(
       (r) => `
     <tr>
-      <td class="mono">${r.file}</td>
+      <td class="mono">${r.file}${noteHtml(r)}</td>
       <td class="mono">${fmtBytes(r.input_size)}</td>
       <td class="mono">${r.output_size != null ? fmtBytes(r.output_size) : "—"}</td>
       <td class="mono">${r.saved_pct != null ? r.saved_pct + "%" : "—"}</td>
@@ -242,7 +253,7 @@ function renderVidResults(results) {
     .map(
       (r) => `
     <tr>
-      <td class="mono">${r.file}</td>
+      <td class="mono">${r.file}${noteHtml(r)}</td>
       <td class="mono">${fmtBytes(r.input_size)}</td>
       <td class="mono">${r.output_size != null ? fmtBytes(r.output_size) : "—"}</td>
       <td class="mono">${r.saved_pct != null ? r.saved_pct + "%" : "—"}</td>
@@ -420,7 +431,7 @@ function renderFontsResults(results) {
     .map(
       (r) => `
     <tr>
-      <td class="mono">${r.file}</td>
+      <td class="mono">${r.file}${noteHtml(r)}</td>
       <td class="mono">${fmtBytes(r.input_size)}</td>
       <td class="mono">${r.output_size != null ? fmtBytes(r.output_size) : "—"}</td>
       <td class="mono">${r.saved_pct != null ? r.saved_pct + "%" : "—"}</td>

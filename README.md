@@ -109,6 +109,12 @@ source's license terms. Source files are never touched.
 | fontslice | Every `name` table record: copyright, trademark, manufacturer, designer, description, vendor/designer URLs, license and license URL. Embedding permissions (`OS/2.fsType`) | Glyphs and OpenType features outside the chosen subset (that is the point of subsetting) |
 | vidopt | Container tags `copyright`, `artist`, `author`, `album_artist`, `composer`, `license` | GPS location, creation date, device make/model, encoder and handler tags, all other container and stream metadata. Rotation is baked into the pixels |
 
+**Content Credentials (C2PA)** in images and videos are signed over the
+original pixels, so any re-encode invalidates them and they are not copied.
+imgopt and vidopt flag such files with a note (CLI output and the zippy results
+table), and carry the AI-generated marker (IPTC `DigitalSourceType`) from the
+manifest into the output's XMP so AI content stays machine-readably labelled.
+
 Pass `--keep-exif` to imgopt (or tick **Keep all metadata** in the zippy
 Images tab) to keep every piece of image metadata, including GPS and camera
 details.
