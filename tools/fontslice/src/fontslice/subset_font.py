@@ -239,6 +239,7 @@ def process_font(
             subset_arg,
             f"--output-file={out}",
             f"--layout-features={features}",
+            "--name-IDs=*",  # keep copyright, trademark, license and URL records
         ] + extra)
         try:
             fix_ink_metrics(out)

@@ -2,7 +2,10 @@
 
 Command-line tool for optimizing images for web delivery.
 Compresses JPEG, PNG, WebP, GIF, BMP, and TIFF files using Pillow.
-Source files are never modified or deleted. EXIF metadata is stripped by default.
+Source files are never modified or deleted. Metadata (camera details, GPS,
+comments) is stripped by default, but author and copyright fields (EXIF
+Artist/Copyright, XMP rights, PNG Copyright/Author text) and non-sRGB colour
+profiles are always kept.
 
 ## Quick start
 
@@ -112,7 +115,7 @@ imgopt ./raw-images --recursive --overwrite
 | `--jpg` | off | Convert all outputs to JPEG (lossy, drops transparency) |
 | `--max-width PX` | off | Scale down if wider than PX |
 | `--max-height PX` | off | Scale down if taller than PX |
-| `--keep-exif` | off | Preserve EXIF metadata instead of stripping it |
+| `--keep-exif` | off | Preserve all metadata (EXIF, XMP, PNG text, ICC profile) instead of stripping it |
 | `--recursive` / `-r` | off | Include subfolders |
 | `--overwrite` | off | Replace existing outputs |
 | `--dry-run` | off | Print what would be done, do not write files |

@@ -3,7 +3,8 @@ imgopt — web-optimised image compression for teams.
 
 Compresses JPEG, PNG, WebP, GIF, BMP, and TIFF images using Pillow.
 Source files are never modified. Outputs land in an 'optimized/' subfolder
-unless --output is given. EXIF metadata is stripped by default.
+unless --output is given. Metadata is stripped by default, except author and
+copyright fields and non-sRGB colour profiles, which are always kept.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from __future__ import annotations
 import argparse
 import shutil
 import sys
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,6 +32,38 @@ PNG_COMPRESS_MAP: dict[int, int] = {5: 6, 4: 7, 3: 8, 2: 9, 1: 9}
 # optimiser, so re-encoded PNGs are often bigger than a source that a real
 # optimiser already touched. Running oxipng on our output recovers that.
 OXIPNG_LEVEL_MAP: dict[int, int] = {5: 2, 4: 3, 3: 4, 2: 6, 1: 6}
+
+# Chunks oxipng must not strip: its "safe" set plus the text/EXIF chunks we
+# wrote on purpose (copyright, author, or everything with --keep-exif).
+OXIPNG_KEEP_CHUNKS = [
+    b"cICP", b"iCCP", b"sRGB", b"pHYs", b"acTL", b"fcTL", b"fdAT",
+    b"tEXt", b"iTXt", b"zTXt", b"eXIf",
+]
+
+# ── Rights metadata kept even when stripping ─────────────────────────────────
+RIGHTS_EXIF_TAGS = (0x013B, 0x8298)  # Artist, Copyright
+RIGHTS_PNG_KEYS = {"Author", "Copyright", "Disclaimer"}
+PNG_XMP_KEY = "XML:com.adobe.xmp"
+
+XMP_NAMESPACES = {
+    "x": "adobe:ns:meta/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "xmpRights": "http://ns.adobe.com/xap/1.0/rights/",
+    "photoshop": "http://ns.adobe.com/photoshop/1.0/",
+}
+_RDF = XMP_NAMESPACES["rdf"]
+RIGHTS_XMP_FIELDS = {
+    f"{{{XMP_NAMESPACES['dc']}}}rights",
+    f"{{{XMP_NAMESPACES['dc']}}}creator",
+    f"{{{XMP_NAMESPACES['xmpRights']}}}Marked",
+    f"{{{XMP_NAMESPACES['xmpRights']}}}Owner",
+    f"{{{XMP_NAMESPACES['xmpRights']}}}UsageTerms",
+    f"{{{XMP_NAMESPACES['xmpRights']}}}WebStatement",
+    f"{{{XMP_NAMESPACES['photoshop']}}}Credit",
+}
+for _prefix, _uri in XMP_NAMESPACES.items():
+    ET.register_namespace(_prefix, _uri)
 
 # Extension -> the format we'd write when no conversion is requested. Used to
 # decide whether a "larger than source" result is a same-format regression
@@ -66,10 +100,107 @@ def _run_oxipng(path: Path, quality: int) -> None:
         oxipng.optimize(
             str(path),
             level=OXIPNG_LEVEL_MAP.get(quality, 3),
-            strip=oxipng.StripChunks.safe(),
+            strip=oxipng.StripChunks.keep(OXIPNG_KEEP_CHUNKS),
         )
     except Exception:
         pass
+
+
+# ── Metadata ──────────────────────────────────────────────────────────────────
+
+def _rights_xmp(xmp: bytes | str) -> bytes | None:
+    """Return a minimal XMP packet holding only the source's rights fields.
+
+    Returns None when the packet is unparseable or has no rights fields.
+    """
+    if isinstance(xmp, str):
+        xmp = xmp.encode("utf-8")
+    try:
+        root = ET.fromstring(xmp.strip())
+    except ET.ParseError:
+        return None
+
+    out_desc = ET.Element(f"{{{_RDF}}}Description", {f"{{{_RDF}}}about": ""})
+    found = False
+    for desc in root.iter(f"{{{_RDF}}}Description"):
+        for key, value in desc.attrib.items():
+            if key in RIGHTS_XMP_FIELDS:
+                out_desc.set(key, value)
+                found = True
+        for child in desc:
+            if child.tag in RIGHTS_XMP_FIELDS:
+                out_desc.append(child)
+                found = True
+    if not found:
+        return None
+
+    meta = ET.Element(f"{{{XMP_NAMESPACES['x']}}}xmpmeta")
+    ET.SubElement(meta, f"{{{_RDF}}}RDF").append(out_desc)
+    return ET.tostring(meta, encoding="utf-8")
+
+
+def _is_srgb(icc: bytes) -> bool:
+    """True when an ICC profile is plain sRGB, which browsers assume anyway."""
+    try:
+        from io import BytesIO
+
+        from PIL import ImageCms  # type: ignore[import]
+        desc = ImageCms.getProfileDescription(ImageCms.ImageCmsProfile(BytesIO(icc)))
+    except Exception:
+        return False
+    return "srgb" in desc.lower()
+
+
+def _metadata_kwargs(
+    info: dict, exif, png_text: dict, out_fmt: str, keep_all: bool,
+) -> dict:
+    """Build Pillow save kwargs that carry source metadata into the output.
+
+    Pillow copies no metadata on save unless told to. A non-sRGB ICC profile is
+    always kept so colours don't shift. With keep_all, EXIF/XMP/text and any ICC
+    profile go through as-is; otherwise only author and copyright fields survive.
+    """
+    from PIL import Image, PngImagePlugin  # type: ignore[import]
+
+    if out_fmt not in ("JPEG", "PNG", "WEBP"):
+        return {}
+
+    kwargs: dict = {}
+    icc = info.get("icc_profile")
+    if icc and (keep_all or not _is_srgb(icc)):
+        kwargs["icc_profile"] = icc
+
+    if keep_all:
+        exif_out = exif
+    else:
+        exif_out = Image.Exif()
+        for tag in RIGHTS_EXIF_TAGS:
+            if tag in exif:
+                exif_out[tag] = exif[tag]
+    if len(exif_out):
+        kwargs["exif"] = exif_out.tobytes()
+
+    xmp = info.get("xmp") or png_text.get(PNG_XMP_KEY)
+    if isinstance(xmp, str):
+        xmp = xmp.encode("utf-8")
+    xmp_out = xmp if keep_all or not xmp else _rights_xmp(xmp)
+
+    if out_fmt == "PNG":
+        pnginfo = PngImagePlugin.PngInfo()
+        for key, value in png_text.items():
+            if key != PNG_XMP_KEY and (keep_all or key in RIGHTS_PNG_KEYS):
+                pnginfo.add_itxt(key, str(value))
+        if xmp_out:
+            pnginfo.add_itxt(PNG_XMP_KEY, xmp_out.decode("utf-8", "replace"))
+        if pnginfo.chunks:
+            kwargs["pnginfo"] = pnginfo
+    else:
+        if xmp_out:
+            kwargs["xmp"] = xmp_out
+        if out_fmt == "JPEG" and keep_all and info.get("comment"):
+            kwargs["comment"] = info["comment"]
+
+    return kwargs
 
 
 # ── Core processing ───────────────────────────────────────────────────────────
@@ -145,9 +276,12 @@ def optimize_file(
 
     try:
         img = Image.open(source)
+        png_text = dict(getattr(img, "text", None) or {})
 
         # Correct EXIF orientation before any resize so thumbnails face the right way.
         img = ImageOps.exif_transpose(img)
+        src_info = dict(img.info)
+        src_exif = img.getexif()
 
         # Resize if needed (preserve aspect ratio).
         w, h = img.size
@@ -162,8 +296,9 @@ def optimize_file(
         if resized:
             img = img.resize((new_w, new_h), Image.LANCZOS)
 
-        # Build save kwargs.
-        save_kwargs: dict = {}
+        save_kwargs = _metadata_kwargs(
+            src_info, src_exif, png_text, out_fmt, keep_all=not strip_exif,
+        )
 
         if out_fmt == "JPEG":
             if img.mode in ("RGBA", "P", "LA") or "transparency" in img.info:
@@ -177,8 +312,6 @@ def optimize_file(
             save_kwargs["quality"]   = QUALITY_MAP[quality]
             save_kwargs["optimize"]  = True
             save_kwargs["progressive"] = True
-            if strip_exif:
-                save_kwargs["exif"] = b""
 
         elif out_fmt == "PNG":
             save_kwargs["compress_level"] = PNG_COMPRESS_MAP[quality]
@@ -200,8 +333,6 @@ def optimize_file(
             else:
                 save_kwargs["quality"] = QUALITY_MAP[quality]
             save_kwargs["method"] = 6  # best compression ratio
-            if strip_exif:
-                save_kwargs["exif"] = b""
 
         elif out_fmt == "GIF":
             pass  # Pillow re-saves GIFs; no meaningful quality knob
@@ -393,7 +524,8 @@ examples:
     parser.add_argument("--max-height", type=int, metavar="PX",
                         help="Scale down if image is taller than PX (preserves aspect ratio)")
     parser.add_argument("--keep-exif", action="store_true",
-                        help="Preserve EXIF metadata (stripped by default)")
+                        help="Preserve all metadata (EXIF, XMP, text). Without it, only the "
+                             "author/copyright fields and non-sRGB colour profiles are kept")
     parser.add_argument("--recursive", "-r", action="store_true",
                         help="Include subfolders when input is a directory")
     parser.add_argument("--overwrite", action="store_true",
