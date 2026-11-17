@@ -16,7 +16,7 @@ import sys
 import tempfile
 import urllib.request
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +45,9 @@ DEFAULT_SPEED = "slow"
 INPUT_EXTENSIONS = {".mp4", ".mov"}
 OUTPUT_EXTENSION = ".mp4"
 OUTPUT_SUBFOLDER = "optimized"
+
+# Container tags carried over even though all other metadata is stripped.
+RIGHTS_TAGS = ("copyright", "artist", "author", "album_artist", "composer", "license")
 
 # ── ffmpeg auto-download (Windows only) ──────────────────────────────────────
 FFMPEG_DOWNLOAD_URL = (
@@ -76,6 +79,7 @@ class VideoInfo:
     video_codec: str
     has_audio: bool
     has_attached_pic: bool = False
+    rights_tags: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -218,6 +222,9 @@ def probe_video(ffprobe: str, path: Path) -> VideoInfo:
         if s.get("codec_type") == "video"
     )
 
+    tags = {k.lower(): v for k, v in (fmt.get("tags") or {}).items()}
+    rights = {k: str(tags[k]) for k in RIGHTS_TAGS if tags.get(k)}
+
     return VideoInfo(
         path=path,
         duration=duration,
@@ -226,6 +233,7 @@ def probe_video(ffprobe: str, path: Path) -> VideoInfo:
         video_codec=video.get("codec_name", "unknown"),
         has_audio=audio is not None,
         has_attached_pic=attached_pic,
+        rights_tags=rights,
     )
 
 
@@ -272,9 +280,12 @@ def build_ffmpeg_command(
     # Move moov atom to front for HTTP progressive streaming.
     cmd += ["-movflags", "+faststart"]
 
-    # Strip container-level metadata (creation date, GPS, author, etc.).
-    # Rotation is baked in by ffmpeg's default -autorotate behaviour.
+    # Strip container-level metadata (creation date, GPS, device, etc.) but
+    # write back copyright/author tags. Rotation is baked in by ffmpeg's
+    # default -autorotate behaviour.
     cmd += ["-map_metadata", "-1"]
+    for key, value in info.rights_tags.items():
+        cmd += ["-metadata", f"{key}={value}"]
 
     if info.has_audio:
         cmd += ["-c:a", "aac", "-b:a", DEFAULT_AUDIO_BITRATE]

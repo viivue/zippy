@@ -4,6 +4,20 @@ All notable changes to the zippy workspace are documented here. Versions apply
 to all four packages (`fontslice`, `imgopt`, `vidopt`, `zippy`), which move in
 lockstep.
 
+## [Unreleased]
+
+### Fixed
+
+- **imgopt:** author and copyright metadata (EXIF Artist/Copyright, XMP rights,
+  PNG Copyright/Author/Disclaimer text) and non-sRGB colour profiles are now
+  kept by default; other metadata is still stripped.
+- **imgopt:** `--keep-exif` ("Keep all metadata" in the UI) now actually keeps
+  EXIF, XMP, PNG text and the ICC profile; it previously kept nothing.
+- **fontslice:** keep every `name` table record, so trademark, manufacturer,
+  designer, license and license URL survive subsetting.
+- **vidopt:** keep `copyright`, `artist`, `author`, `album_artist`, `composer`
+  and `license` container tags while still stripping all other metadata.
+
 ## [0.1.1] - 2026-09-03
 
 ### Added
